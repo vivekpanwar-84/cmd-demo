@@ -327,12 +327,12 @@ export function Organizations() {
                       {org.plan_status === "active" ? (
                         <div className="flex items-center gap-1 text-green-600">
                           <CheckCircle className="w-5 h-5" />
-                          Active
+                          {/* Active */}
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 text-red-600">
                           <XCircle className="w-5 h-5" />
-                          Inactive
+                          {/* Inactive */}
                         </div>
                       )}
                     </div>

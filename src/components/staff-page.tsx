@@ -214,11 +214,11 @@ export function StaffPage({ organizationId }: StaffProps) {
           <div className="text-sm">
             {staff.is_active ? (
               <span className="flex items-center gap-1 text-green-600 font-medium">
-                <CheckCircle className="w-4 h-4" /> Active
+                <CheckCircle className="w-4 h-4" /> 
               </span>
             ) : (
               <span className="flex items-center gap-1 text-gray-500 font-medium">
-                <XCircle className="w-4 h-4" /> Inactive
+                <XCircle className="w-4 h-4" /> 
               </span>
             )}
           </div>
