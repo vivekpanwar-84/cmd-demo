@@ -11,6 +11,7 @@ import {
   List,
   LayoutGrid,
   Eye,
+  Pencil
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,7 +85,7 @@ export function Customers({ organizationId }: CustomersProps) {
           </p>
         </div>
 
-        <Button onClick={()=>route.push(`${organizationId}/add-customer`)} className="bg-primary hover:bg-primary/90 text-white">
+        <Button onClick={() => route.push(`${organizationId}/add-customer`)} className="bg-primary hover:bg-primary/90 text-white">
           <User className="w-4 h-4 mr-2" />
           Add Customer
         </Button>
