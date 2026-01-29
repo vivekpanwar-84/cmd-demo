@@ -3,7 +3,7 @@ import { adminService } from "@/services/admin.service";
 import { useAuth } from "@/providers/AuthProvider";
 import type { ApiResponseStaff, RegisterStaffPayload, Staff } from "@/types/staff";
 
-import { Customer, RegisterCustomerPayload } from "@/types/customertsx";
+import { Customer, RegisterCustomerPayload, UseOrganizationCustomerParams } from "@/types/customertsx";
 import { DashboardStats } from "@/types/dashboard";
 import { Organization } from "@/types/organization";
 
@@ -32,13 +32,16 @@ export const useDashboardStats = () => {
    ORGANIZATIONS (MAIN LIST PAGE)
 ========================= */
 
-export const useOrganizations = () => {
+export const useOrganizations = (
+  params: { page: number; limit: number; search?: string }
+) => {
   const { isAuthenticated } = useAuth();
 
-  return useQuery<Organization[]>({
-    queryKey: ["organizations"],
-    queryFn: adminService.getAllOrganizations,
+  return useQuery({
+    queryKey: ["organizations", params],
+    queryFn: () => adminService.getOrganizations(params),
     enabled: Boolean(isAuthenticated),
+    // keepPreviousData: true, // smooth UX for pagination
   });
 };
 
@@ -91,15 +94,21 @@ export const useOrganizationDetail = (orgId: string) => {
    CUSTOMERS BY ORG
 ========================= */
 
-export const useOrganizationCustomer = (orgId: string) => {
+export const useOrganizationCustomer = (
+  orgId: string,
+  params: { page: number; limit: number; search?: string }
+) => {
   const { isAuthenticated } = useAuth();
 
-  return useQuery<Customer[]>({
-    queryKey: ["organization", "customer", orgId],
-    queryFn: () => adminService.getCustomerByOrg(orgId),
+  return useQuery({
+    queryKey: ["organization", "customers", orgId, params],
+    queryFn: () => adminService.getCustomerByOrg(orgId, params),
     enabled: Boolean(isAuthenticated && orgId),
+    // keepPreviousData: true,
   });
 };
+
+
 
 /* =========================
    CREATE CUSTOMERS
@@ -120,19 +129,19 @@ export const useCreateCustomer = (orgId: string) => {
   });
 };
 
-/* =========================
-   STAFF / USERS BY ORG
-========================= */
+// /* =========================
+//    STAFF / USERS BY ORG
+// ========================= */
 
-export const useOrganizationUsers = (orgId: string) => {
-  const { isAuthenticated } = useAuth();
+// export const useOrganizationUsers = (orgId: string) => {
+//   const { isAuthenticated } = useAuth();
 
-  return useQuery<OrganizationUser[]>({
-    queryKey: ["organization-users", orgId],
-    queryFn: () => adminService.getStaffByOrg(orgId),
-    enabled: Boolean(isAuthenticated && orgId),
-  });
-};
+//   return useQuery<OrganizationUser[]>({
+//     queryKey: ["organization-users", orgId],
+//     queryFn: () => adminService.getStaffByOrg(orgId),
+//     enabled: Boolean(isAuthenticated && orgId),
+//   });
+// };
 
 /* =========================
    STAFF ALIAS (OPTIONAL)
@@ -141,13 +150,31 @@ export const useOrganizationUsers = (orgId: string) => {
 /* =========================
    STAFF BY ORG
 ========================= */
-export const useOrganizationStaff = (orgId: string) => {
+export const useOrganizationStaff = (
+  orgId: string,
+  params: { page: number; limit: number; search?: string }
+) => {
   const { isAuthenticated } = useAuth();
 
   return useQuery({
-    queryKey: ['organization', 'staff', orgId],
-    queryFn: () => adminService.getStaffByOrg(orgId),
-    enabled: isAuthenticated && !!orgId, // 🔒 FIXED
+    queryKey: ["organization", "staff", orgId, params],
+    queryFn: () => adminService.getStaffByOrg(orgId, params),
+    enabled: Boolean(isAuthenticated && orgId),
+    // keepPreviousData: true, // ⭐ smooth pagination
+  });
+};
+
+
+/* =========================
+   ADMIN STAFF LIST
+========================= */
+export const useAdminStaff = (page: number = 1, limit: number = 10, organizationId?: string, search?: string) => {
+  const { isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["admin", "adminstaff", page, limit, organizationId, search],
+    queryFn: () => adminService.getAdminStaff(page, limit, organizationId, search),
+    enabled: Boolean(isAuthenticated),
   });
 };
 
@@ -169,15 +196,85 @@ export const useCreateStaff = (orgId: string) => {
   });
 };
 
+export const useCreateAdminStaff = (organizationId?: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: RegisterStaffPayload) =>
+      adminService.createAdminStaff(data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "adminstaff"],
+      });
+      if (organizationId) {
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "adminstaff", organizationId],
+        });
+      }
+    },
+  });
+};
+
+export const useUpdateAdminStaff = (staffId: string, organizationId?: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Partial<RegisterStaffPayload>) =>
+      adminService.updateAdminStaff(staffId, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "adminstaff"],
+      });
+      if (organizationId) {
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "adminstaff", organizationId],
+        });
+      }
+    },
+  });
+};
+
+export const useDeleteAdminStaff = (organizationId?: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (staffId: string) => adminService.deleteAdminStaff(staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "adminstaff"],
+      });
+      if (organizationId) {
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "adminstaff", organizationId],
+        });
+      }
+    },
+  });
+};
+
+export const useAdminStaffPermissions = () => {
+  return useQuery({
+    queryKey: ["admin", "adminstaff", "permissions"],
+    queryFn: adminService.getAdminStaffPermissions,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+};
+
 /* =========================
    INVOICE BY ORG
 ========================= */
-export const useOrganizationInvoice = (orgId: string) => {
+export const useOrganizationInvoice = (
+  orgId: string,
+  params: { page: number; limit: number; search?: string }
+) => {
   const { isAuthenticated } = useAuth();
 
-  return useQuery<ApiResponse<Invoice[]>>({
-    queryKey: ['organization', 'invoice', orgId],
-    queryFn: () => adminService.getInvoicesByOrg(orgId),
-    enabled: isAuthenticated && !!orgId, // 🔒 FIXED
+  return useQuery({
+    queryKey: ["organization", "invoice", orgId, params],
+    queryFn: () => adminService.getInvoicesByOrg(orgId, params),
+    enabled: Boolean(isAuthenticated && orgId),
+    // keepPreviousData: true,
   });
 };

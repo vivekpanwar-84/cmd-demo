@@ -7,6 +7,7 @@ import {
   Wallet,
   LayoutGrid,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 
 export const MENU_ITEMS = [
@@ -39,6 +40,12 @@ export const MENU_ITEMS = [
     label: "OrganizationPlans",
     href: "/plans",
     icon: Wallet,
+  },
+  {
+    id: "permissions",
+    label: "Permissions",
+    href: "/permissions",
+    icon: ShieldCheck,
   },
   {
     id: "settings",

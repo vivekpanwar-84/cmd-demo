@@ -17,7 +17,7 @@ export const pricingService = {
         return [];
     },
     updatePlan: async (id: string, data: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> => {
-        const response = await api.put<ApiResponsePlans<SubscriptionPlan>>(`/admin/pricing`, data);
+        const response = await api.patch<ApiResponsePlans<SubscriptionPlan>>(`/admin/pricing`, data);
         return response.data.data;
     },
 };

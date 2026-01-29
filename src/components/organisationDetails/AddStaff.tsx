@@ -22,37 +22,32 @@ const createStaffSchema = z.object({
   phone: z.string().min(8, "Invalid phone number"),
   password: z.string().min(6, "Minimum 6 characters"),
   permissions: z
-    .array(
-      z.enum([
-        "VIEW_CUSTOMERS",
-        "CREATE_INVOICE",
-        "VIEW_INVOICES",
-      ])
-    )
+    .array(z.string())
     .min(1, "Select at least one permission"),
 });
 
-/* 👇 IMPORTANT: form type comes from backend */
 type FormValues = RegisterStaffPayload;
 
 /* ================= PERMISSIONS ================= */
 const PERMISSIONS: { key: StaffPermission; label: string }[] = [
-  { key: "VIEW_CUSTOMERS", label: "View Customers" },
-  { key: "CREATE_INVOICE", label: "Create Invoice" },
-  { key: "VIEW_INVOICES", label: "View Invoices" },
+  { key: "VIEW_CUSTOMER", label: "View Customers" },
+  { key: "CREATE_CUSTOMER", label: "Create Customer" },
+  { key: "VIEW_INVOICE", label: "View Invoices" },
 ];
 
 export default function AddStaffPage({
   organizationId,
+  onClose,
 }: {
   organizationId: string;
+  onClose?: () => void;
 }) {
   const {
     register,
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(createStaffSchema),
     defaultValues: {
@@ -66,19 +61,16 @@ export default function AddStaffPage({
     createStaff.mutate(data, {
       onSuccess: () => {
         reset();
-        alert("Staff created successfully!");
-      },
-      onError: (err) => {
-        console.error("Failed to create staff", err);
+        onClose?.(); // ✅ close modal
       },
     });
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold">Add Staff</h1>
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+        {/* ================= STAFF DETAILS ================= */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -87,13 +79,49 @@ export default function AddStaffPage({
           </CardHeader>
 
           <CardContent className="grid md:grid-cols-2 gap-4">
-            <Input placeholder="Full Name" {...register("full_name")} />
-            <Input placeholder="Email" {...register("email")} />
-            <Input placeholder="Phone" {...register("phone")} />
-            <Input type="password" placeholder="Password" {...register("password")} />
+            <div>
+              <Input placeholder="Full Name" {...register("full_name")} />
+              {errors.full_name && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.full_name.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Input placeholder="Email" {...register("email")} />
+              {errors.email && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Input placeholder="Phone" {...register("phone")} />
+              {errors.phone && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.phone.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
+        {/* ================= PERMISSIONS ================= */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -108,15 +136,18 @@ export default function AddStaffPage({
               render={({ field }) => (
                 <div className="space-y-2">
                   {PERMISSIONS.map((perm) => (
-                    <label key={perm.key} className="flex gap-2 items-center">
+                    <label
+                      key={perm.key}
+                      className="flex gap-2 items-center text-sm"
+                    >
                       <Checkbox
                         checked={field.value.includes(perm.key)}
                         onCheckedChange={(checked) =>
                           checked
                             ? field.onChange([...field.value, perm.key])
                             : field.onChange(
-                                field.value.filter((p) => p !== perm.key)
-                              )
+                              field.value.filter((p) => p !== perm.key)
+                            )
                         }
                       />
                       {perm.label}
@@ -125,18 +156,36 @@ export default function AddStaffPage({
                 </div>
               )}
             />
+
+            {errors.permissions && (
+              <p className="text-xs text-red-500 mt-2">
+                {errors.permissions.message}
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting || createStaff.isPending}
-        >
-          {(isSubmitting || createStaff.isPending) && (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          )}
-          Create Staff
-        </Button>
+        {/* ================= ACTIONS ================= */}
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting || createStaff.isPending}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="submit"
+            disabled={isSubmitting || createStaff.isPending}
+          >
+            {(isSubmitting || createStaff.isPending) && (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            )}
+            Create Staff
+          </Button>
+        </div>
       </form>
     </div>
   );

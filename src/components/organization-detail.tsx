@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Customers } from "./customers";
 import { Invoices } from "./invoices";
-import { useOrganizations, useOrganizationUsers } from "@/hooks/useAdmin";
+import { useOrganizationDetail, useOrganizations, useOrganizationsDetail } from "@/hooks/useAdmin";
 import { useRef, useState, useEffect, useMemo } from "react";
 import { StaffPage } from "./staff-page";
 
@@ -30,9 +30,9 @@ interface OrganizationDetailProps {
 }
 
 export function OrganizationDetail({ organizationId }: OrganizationDetailProps) {
-  const { data: organizations, isLoading: isLoadingOrgs } = useOrganizations();
-  const { isLoading: isLoadingUsers } =
-    useOrganizationUsers(organizationId);
+  const { data: org, isLoading: isLoadingOrg } = useOrganizationDetail(organizationId);
+  console.log("Organization Detail Data:", org);
+  const { data: organizations, isLoading: isLoadingOrgs } = useOrganizationsDetail();
 
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
   const orgMenuRef = useRef<HTMLDivElement>(null);
@@ -52,16 +52,12 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
 
   const filteredOrganizations = useMemo(() => {
     if (!orgSearch) return organizations;
-    return organizations?.filter((o) =>
+    return organizations?.filter((o: any) =>
       o.name.toLowerCase().includes(orgSearch.toLowerCase())
     );
   }, [organizations, orgSearch]);
 
-  const org = useMemo(() => {
-    return organizations?.find((o) => o._id === organizationId);
-  }, [organizations, organizationId]);
-
-  if (isLoadingOrgs || isLoadingUsers) {
+  if (isLoadingOrg) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -150,7 +146,7 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
                   {/* Org List */}
                   <div className="max-h-40 overflow-auto">
                     {filteredOrganizations?.length ? (
-                      filteredOrganizations.map((o) => {
+                      filteredOrganizations.map((o: any) => {
                         const isActive = o._id === organizationId;
 
                         return (
@@ -225,22 +221,22 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
         <div className="flex flex-wrap gap-2">
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm">
             <UsersRound className="w-4 h-4 text-primary" />
-            Staff {org.usage.staff}/{org.limits.staff}
+            Staff {org?.usage?.staff ?? 0}/{org?.limits?.staff ?? 0}
           </div>
 
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm">
             <Users className="w-4 h-4 text-primary" />
-            Customers {org.usage.customers}/{org.limits.customers}
+            Customers {org?.usage?.customers ?? 0}/{org?.limits?.customers ?? 0}
           </div>
 
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm">
             <FileText className="w-4 h-4 text-primary" />
-            Invoices {org.usage.invoices}/{org.limits.invoices}
+            Invoices {org?.usage?.invoices ?? 0}/{org?.limits?.invoices ?? 0}
           </div>
 
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-sm">
             <TrendingUp className="w-4 h-4 text-primary" />
-            {org.currency}
+            {org?.currency || "—"}
           </div>
         </div>
 
@@ -341,7 +337,7 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
                 <p className="text-sm text-gray-500">
                   Staff Limit:{" "}
                   <span className="font-semibold">
-                    {org.limits.staff} members
+                    {org?.limits?.staff ?? 0} members
                   </span>
                 </p>
 

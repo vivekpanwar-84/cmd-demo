@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { User, Mail, Phone, Loader2 } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,11 +13,12 @@ import { useCreateCustomer } from "@/hooks/useAdmin";
 
 type FormValues = z.infer<typeof createCustomerSchema>;
 
-/* ================= COMPONENT ================= */
 export default function AddCustomerPage({
   organizationId,
+  onClose,
 }: {
   organizationId: string;
+  onClose: () => void;
 }) {
   const {
     register,
@@ -29,29 +30,33 @@ export default function AddCustomerPage({
     mode: "onTouched",
   });
 
-    const createCustomer = useCreateCustomer(organizationId);
-  
-    const onSubmit: SubmitHandler<FormValues> = (data) => {
-      createCustomer.mutate(data, {
-        onSuccess: () => {
-          reset();
-          alert("Staff created successfully!");
-        },
-        onError: (err) => {
-          console.error("Failed to create staff", err);
-        },
-      });
-    };
+  const createCustomer = useCreateCustomer(organizationId);
+
+  const onSubmit: SubmitHandler<FormValues> = (data) => {
+    createCustomer.mutate(data, {
+      onSuccess: () => {
+        reset();
+        onClose(); // ✅ close dialog
+      },
+      onError: (err) => {
+        console.error("Failed to create customer", err);
+      },
+    });
+  };
+
+  const isLoading = isSubmitting || createCustomer.isPending;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Add Customer</h1>
+      {/* <div>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Add Customer
+        </h1>
         <p className="text-sm text-gray-500 mt-1">
           Create a new customer record
         </p>
-      </div>
+      </div> */}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* ================= CUSTOMER INFO ================= */}
@@ -122,16 +127,21 @@ export default function AddCustomerPage({
 
         {/* ================= ACTIONS ================= */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" type="button">
+          <Button
+            variant="outline"
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
 
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isLoading}
             className="bg-primary text-white"
           >
-            {isSubmitting && (
+            {isLoading && (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             )}
             Create Customer

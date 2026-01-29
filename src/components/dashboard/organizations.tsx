@@ -1,22 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  Search,
-  Building2,
-  Users,
-  UsersRound,
-  FileText,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  LayoutGrid,
-  List,
-  ChevronDown,
-  Eye,
-  Globe,
+import { useDebounce } from "@/hooks/useDebounce";
+import { useOrganizations } from "@/hooks/useAdmin"; // new paginated hook
+import { 
+  Search, Building2, Users, UsersRound, FileText,
+  CheckCircle, XCircle, Loader2, LayoutGrid, List,
+  ChevronDown, Eye, Globe, ChevronLeft, ChevronRight 
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,13 +18,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-
-import { useOrganizations } from "@/hooks/useAdmin";
-import type { Organization } from "@/types/organization";
+import { Organization } from "@/types/organization";
 
 /* ================= TYPES ================= */
+type ViewMode = "list" | "card";
 
 type ViewType = "card" | "list";
 type SortKey = "name" | "staff" | "customers" | "invoices" | "status";
@@ -41,69 +31,35 @@ type SortKey = "name" | "staff" | "customers" | "invoices" | "status";
 /* ================= COMPONENT ================= */
 
 export function Organizations() {
-  const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [limit] = useState(5);
+  const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [view, setView] = useState<ViewType>("list");
-  const [sortBy, setSortBy] = useState<SortKey>("name");
+  const debouncedSearch = useDebounce(search, 500);
 
-  const { data: organizations, isLoading, error } = useOrganizations();
+  const { data, isLoading, error } = useOrganizations({
+    page,
+    limit,
+    search: debouncedSearch
+  });
 
-  /* ================= FILTER + SORT ================= */
+  const organizations: Organization[] = data?.data ?? [];
+  const meta = data?.pagination;
 
-  const filteredAndSortedOrgs = useMemo<Organization[]>(() => {
-    if (!organizations) return [];
+  const handlePageChange = (newPage: number) => {
+    if (!meta) return;
+    setPage(Math.min(Math.max(newPage, 1), meta.totalPages));
+  };
 
-    const query = searchQuery.toLowerCase();
-
-    const filtered = organizations.filter((org) =>
-      org.name?.toLowerCase().includes(query)
+  const getSlidingPages = (): number[] => {
+    if (!meta) return [];
+    const start = Math.max(1, Math.min(page, meta.totalPages - 2));
+    return Array.from(
+      { length: Math.min(3, meta.totalPages - start + 1) },
+      (_, i) => start + i
     );
-
-    return [...filtered].sort((a, b) => {
-      const aUsage = a.usage ?? { staff: 0, customers: 0, invoices: 0 };
-      const bUsage = b.usage ?? { staff: 0, customers: 0, invoices: 0 };
-
-      switch (sortBy) {
-        case "staff":
-          return (bUsage.staff ?? 0) - (aUsage.staff ?? 0);
-
-        case "customers":
-          return (bUsage.customers ?? 0) - (aUsage.customers ?? 0);
-
-        case "invoices":
-          return (bUsage.invoices ?? 0) - (aUsage.invoices ?? 0);
-
-        case "status":
-          return (a.plan_status ?? "").localeCompare(b.plan_status ?? "");
-
-        case "name":
-        default:
-          return (a.name ?? "").localeCompare(b.name ?? "");
-      }
-    });
-  }, [organizations, searchQuery, sortBy]);
-
-  /* ================= LOADING ================= */
-
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  /* ================= ERROR ================= */
-
-  if (error) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center flex-col gap-4">
-        <p className="text-red-500">Failed to load organizations</p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
-      </div>
-    );
-  }
+  };
 
   /* ================= RENDER ================= */
 
@@ -115,104 +71,87 @@ export function Organizations() {
           <h1 className="text-3xl font-semibold text-gray-900">
             Organizations
           </h1>
-          <p className="text-gray-500 mt-1">
+          {/* <p className="text-gray-500 mt-1">
             Manage all your client organizations
-          </p>
+          </p> */}
         </div>
 
-        <Button
-          onClick={() => router.push("/organizations/add")}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          <Building2 className="w-4 h-4 mr-2" />
-          Add Organization
+        <Button className="bg-primary hover:bg-primary/90 text-white" asChild>
+          <Link href="/organizations/add">
+            <Building2 className="w-4 h-4 mr-2" />
+            Add Organization
+          </Link>
         </Button>
       </div>
 
       {/* Search / Sort / View */}
-      <Card>
-        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search organizations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 pl-9 text-sm"
-            />
-          </div>
+      {/* Search / Sort / View */}
+<div className="flex items-center justify-between">
+  {/* Left description */}
+  <p className="text-muted-foreground">
+    Manage all your client organizations
+  </p>
 
-          <div className="flex gap-2">
-            {/* Sort */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Sort By
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
+  {/* Right controls */}
+  <div className="flex items-center gap-2">
+    {/* Search input */}
+    <div className="relative">
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Input
+        className="pl-8 w-[220px]"
+        placeholder="Search staff..."
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1); // reset to first page on search
+        }}
+      />
+    </div>
 
-              <DropdownMenuContent align="end">
-                {(
-                  [
-                    ["name", "Organization Name"],
-                    ["staff", "Staff Count"],
-                    ["customers", "Customers"],
-                    ["invoices", "Invoices"],
-                    ["status", "Status"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <DropdownMenuItem
-                    key={key}
-                    onClick={() => setSortBy(key)}
-                  >
-                    {label}
-                    {sortBy === key && (
-                      <CheckCircle className="w-4 h-4 ml-auto text-primary" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+    {/* View toggle */}
+    <div className="flex items-center border rounded-md overflow-hidden">
+      <Button
+        variant={viewMode === "list" ? "secondary" : "ghost"}
+        size="sm"
+        className="rounded-none h-8 w-8 p-0"
+        onClick={() => setViewMode("list")}
+      >
+        <List className="h-4 w-4" />
+      </Button>
 
-            {/* View */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  {view === "card" ? (
-                    <LayoutGrid className="w-4 h-4 mr-2" />
-                  ) : (
-                    <List className="w-4 h-4 mr-2" />
-                  )}
-                  {view === "card" ? "Card View" : "List View"}
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
+      <div className="w-px h-4 bg-border" />
 
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setView("card")}>
-                  Card View
-                  {view === "card" && (
-                    <CheckCircle className="w-4 h-4 ml-auto text-primary" />
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setView("list")}>
-                  List View
-                  {view === "list" && (
-                    <CheckCircle className="w-4 h-4 ml-auto text-primary" />
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardContent>
-      </Card>
+      <Button
+        variant={viewMode === "card" ? "secondary" : "ghost"}
+        size="sm"
+        className="rounded-none h-8 w-8 p-0"
+        onClick={() => setViewMode("card")}
+      >
+        <LayoutGrid className="h-4 w-4" />
+      </Button>
+    </div>
+  </div>
+</div>
 
-      {/* CARD VIEW */}
-      {view === "card" && (
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="flex justify-center py-10">
+          <Loader2 className="w-8 h-8 animate-spin text-primary"/>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && !isLoading && (
+        <div className="py-10 text-center text-red-500">
+          Failed to load organizations
+        </div>
+      )}
+
+      {/* Card View */}
+      {viewMode === "card" && !isLoading && organizations.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredAndSortedOrgs.map((org) => {
+          {organizations.map((org: Organization) => {
             const usage = org.usage ?? { staff: 0, customers: 0, invoices: 0 };
             const limits = org.limits ?? { staff: 0, customers: 0, invoices: 0 };
 
@@ -223,60 +162,44 @@ export function Organizations() {
                     <div>
                       <h3 className="font-semibold text-lg">{org.name}</h3>
                       <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                        <Globe className="w-4 h-4" />
+                        <Globe className="w-4 h-4"/>
                         {org.country ?? "N/A"}
                       </div>
                     </div>
 
-                    <Badge
-                      className={
-                        org.plan_status === "active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }
-                    >
+                    <Badge className={org.plan_status==="active" ? "bg-green-100 text-green-700":"bg-red-100 text-red-700"}>
                       {org.plan_status ?? "unknown"}
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4 border-t pt-5 text-sm">
                     <div className="flex items-center gap-2">
-                      <UsersRound className="w-4 h-4 text-gray-400" />
+                      <UsersRound className="w-4 h-4 text-gray-400"/>
                       <div>
                         <p className="text-gray-500">Staff</p>
-                        <p className="font-semibold">
-                          {usage.staff}/{limits.staff}
-                        </p>
+                        <p className="font-semibold">{usage.staff}/{limits.staff}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-400" />
+                      <Users className="w-4 h-4 text-gray-400"/>
                       <div>
                         <p className="text-gray-500">Customers</p>
-                        <p className="font-semibold">
-                          {usage.customers}/{limits.customers}
-                        </p>
+                        <p className="font-semibold">{usage.customers}/{limits.customers}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
-                      <FileText className="w-5 h-5 text-primary" />
+                      <FileText className="w-5 h-5 text-primary"/>
                       <div>
-                        <p className="text-xs text-gray-500 uppercase">
-                          Invoices
-                        </p>
-                        <p className="font-semibold">
-                          {usage.invoices}/{limits.invoices}
-                        </p>
+                        <p className="text-xs text-gray-500 uppercase">Invoices</p>
+                        <p className="font-semibold">{usage.invoices}/{limits.invoices}</p>
                       </div>
                     </div>
                   </div>
 
                   <Button asChild className="w-full">
-                    <Link href={`/organizations/${org._id}`}>
-                      View Organization
-                    </Link>
+                    <Link href={`/organizations/${org._id}`}>View Organization</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -285,37 +208,32 @@ export function Organizations() {
         </div>
       )}
 
-      {/* LIST VIEW */}
-      {view === "list" && (
+      {/* List View */}
+      {viewMode === "list" && !isLoading && (
         <Card>
           <CardContent className="p-0">
             <div className="max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-7 gap-4 px-4 py-3 text-sm font-medium text-gray-500 border-b sticky top-0 bg-white text-center">
+              <div className="grid grid-cols-7 gap-4 px-4 py-3 text-sm font-medium text-gray-500 border-b sticky top-0 bg-white z-10">
                 <div className="col-span-2 text-left">Organization</div>
                 <div>Staff</div>
                 <div>Customers</div>
                 <div>Invoices</div>
                 <div>Status</div>
-                <div>Action</div>
+                <div className="text-center">Action</div>
               </div>
 
-              {filteredAndSortedOrgs.map((org) => {
+              {organizations.map((org: Organization) => {
                 const usage = org.usage ?? { staff: 0, customers: 0, invoices: 0 };
 
                 return (
-                  <div
-                    key={org._id}
-                    className="grid grid-cols-7 gap-4 px-4 py-4 items-center border-b hover:bg-gray-50 text-center"
-                  >
+                  <div key={org._id} className="grid grid-cols-7 gap-4 px-4 py-4 items-center border-b hover:bg-gray-50 text-center">
                     <div className="col-span-2 flex items-center gap-3 text-left">
                       <div className="w-9 h-9 bg-accent rounded-md flex items-center justify-center">
-                        <Building2 className="w-4 h-4 text-primary" />
+                        <Building2 className="w-4 h-4 text-primary"/>
                       </div>
                       <div>
                         <p className="font-medium">{org.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {org.country ?? "N/A"}
-                        </p>
+                        <p className="text-xs text-gray-500">{org.country ?? "N/A"}</p>
                       </div>
                     </div>
 
@@ -324,30 +242,80 @@ export function Organizations() {
                     <div className="font-medium">{usage.invoices}</div>
 
                     <div className="flex justify-center">
-                      {org.plan_status === "active" ? (
-                        <div className="flex items-center gap-1 text-green-600">
-                          <CheckCircle className="w-5 h-5" />
-                          {/* Active */}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-red-600">
-                          <XCircle className="w-5 h-5" />
-                          {/* Inactive */}
-                        </div>
+                      {org.plan_status==="active"?(
+                        <div className="flex items-center gap-1 text-green-600"><CheckCircle className="w-5 h-5"/></div>
+                      ):(
+                        <div className="flex items-center gap-1 text-red-600"><XCircle className="w-5 h-5"/></div>
                       )}
                     </div>
 
                     <div className="flex justify-center">
-                      <Link
-                        href={`/organizations/${org._id}`}
-                        className="p-2 rounded-md hover:bg-accent"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600 hover:text-primary" />
+                      <Link href={`/organizations/${org._id}`} className="p-2 rounded-md hover:bg-accent">
+                        <Eye className="w-4 h-4 text-gray-600 hover:text-primary"/>
                       </Link>
                     </div>
                   </div>
-                );
-              })}
+              )})}
+
+              {/* Pagination */}
+              {meta && meta.totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t">
+                  {/* Page info */}
+                  <p className="text-sm text-muted-foreground">
+                    Page {page} of {meta.totalPages}
+                  </p>
+
+                  {/* Controls */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === 1}
+                      onClick={() => handlePageChange(page - 1)}
+                    >
+                      <ChevronLeft className="w-4 h-4"/>
+                    </Button>
+
+                    {getSlidingPages().map(p => (
+                      <Button
+                        key={p}
+                        size="sm"
+                        variant={p===page ? "default":"outline"}
+                        onClick={() => handlePageChange(p)}
+                      >
+                        {p}
+                      </Button>
+                    ))}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === meta.totalPages}
+                      onClick={() => handlePageChange(page + 1)}
+                    >
+                      <ChevronRight className="w-4 h-4"/>
+                    </Button>
+                  </div>
+
+                  {/* Direct input */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <span>Go to page:</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={meta.totalPages}
+                      defaultValue={page}
+                      className="w-20 h-8"
+                      onBlur={(e)=>handlePageChange(Number(e.target.value))}
+                      onKeyDown={(e)=>{
+                        if(e.key==="Enter"){
+                          handlePageChange(Number((e.target as HTMLInputElement).value))
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

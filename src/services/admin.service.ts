@@ -81,7 +81,8 @@ import api from "@/lib/axios";
 import { ApiResponse, DashboardStats } from "@/types/dashboard";
 import { ApiResponsecustomer, Customer, RegisterCustomerPayload } from "@/types/customertsx";
 import { ApiResponseOrganizations, Organization } from "@/types/organization";
-import { RegisterStaffPayload } from '@/types/staff';
+import { RegisterStaffPayload, ApiResponseAdminStaff, ApiResponseAdminStaffPermissions } from '@/types/staff';
+import { PaginatedResponse } from '@/types/pagination';
 
 export const adminService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
@@ -89,11 +90,24 @@ export const adminService = {
       await api.get<ApiResponse<DashboardStats>>("/admin/dashboard");
     return response.data.data;
   },
+  getOrganizations: async (
+    params: { page: number; limit: number; search?: string }
+  ) => {
+    const res = await api.get("/admin/organizations", {
+      params: {
+        page: params.page,
+        limit: params.limit,
+        ...(params.search ? { search: params.search } : {}), // 🔑 only include search if present
+      },
+    });
+
+    return res.data; // 👈 return full response with data + pagination
+  },
   getAllOrganizations: async (): Promise<Organization[]> => {
-    const res = await api.get<ApiResponseOrganizations<Organization[]>>(
-      "/admin/organizations"
-    );
-    return res.data.data;
+    const response = await api.get("/admin/organizations", {
+      params: { page: 1, limit: 1000 }
+    });
+    return response.data.data;
   },
   getOrganizationById: async (orgId: string): Promise<OrganizationDetail> => {
     const res = await api.get<ApiResponseOrganizationDetail<OrganizationDetail>>(
@@ -101,10 +115,18 @@ export const adminService = {
     );
     return res.data.data;
   },
-  getInvoicesByOrg: async (orgId: string) => {
-    const response = await api.get(`/admin/organizations/${orgId}/invoices`);
-    return response.data; // returns only invoice data.
+  getInvoicesByOrg: async (
+    orgId: string,
+    params: { page: number; limit: number; search?: string }
+  ) => {
+    const response = await api.get(
+      `/admin/organizations/${orgId}/invoices`,
+      { params }
+    );
+
+    return response.data; // { data, pagination }
   },
+
 
   // toggleOrganizationStatus: async (orgId: string) => {
   //   const response = await api.patch(
@@ -117,15 +139,29 @@ export const adminService = {
   //   return response.data;
   // },
 
-  getCustomerByOrg: async (orgId: string): Promise<Customer[]> => {
-    const response = await api.get<ApiResponsecustomer<Customer[]>>(
-      `/admin/organizations/${orgId}/customers`,
+  getCustomerByOrg: async (
+    orgId: string,
+    params: { page: number; limit: number; search?: string }
+  ) => {
+    const res = await api.get(`/admin/organizations/${orgId}/customers`, {
+      params: {
+        page: params.page,
+        limit: params.limit,
+        ...(params.search ? { search: params.search } : {}), // 🔑 IMPORTANT
+      },
+    });
+
+    return res.data; // 👈 return full response
+  },
+  getStaffByOrg: async (
+    orgId: string,
+    params: { page: number; limit: number; search?: string }
+  ) => {
+    const response = await api.get(
+      `/admin/organizations/${orgId}/staffs`,
+      { params }
     );
 
-    return response.data.data; // return only customers array
-  },
-  getStaffByOrg: async (orgId: string) => {
-    const response = await api.get(`/admin/organizations/${orgId}/staffs`);
     return response.data;
   },
   createOrganization: async (data: RegisterOrganizationPayload) => {
@@ -136,8 +172,30 @@ export const adminService = {
     const response = await api.post(`/admin/organizations/${orgId}/customer`, data);
     return response.data;
   },
-  createStaff: async (orgId: string, data: RegisterStaffPayload) => {
-    const response = await api.post(`/admin/organizations/${orgId}/staff`, data);
+  createStaff: async (org_id: string, data: RegisterStaffPayload) => {
+    const response = await api.post(`/admin/organizations/${org_id}/staff`, data);
+    return response.data;
+  },
+  getAdminStaff: async (page: number = 1, limit: number = 10, org_id?: string, search?: string): Promise<ApiResponseAdminStaff> => {
+    const response = await api.get<ApiResponseAdminStaff>(`/admin/adminstaff`, {
+      params: { page, limit, org_id, search },
+    });
+    return response.data;
+  },
+  createAdminStaff: async (data: RegisterStaffPayload) => {
+    const response = await api.post(`/admin/rgsstaff`, data);
+    return response.data;
+  },
+  getAdminStaffPermissions: async (): Promise<ApiResponseAdminStaffPermissions> => {
+    const response = await api.get<ApiResponseAdminStaffPermissions>(`/admin/adminstaff/permission`);
+    return response.data;
+  },
+  updateAdminStaff: async (staffId: string, data: Partial<RegisterStaffPayload>) => {
+    const response = await api.patch(`/admin/adminstaff/${staffId}`, data);
+    return response.data;
+  },
+  deleteAdminStaff: async (staffId: string) => {
+    const response = await api.delete(`/admin/adminstaff/${staffId}`);
     return response.data;
   },
 };

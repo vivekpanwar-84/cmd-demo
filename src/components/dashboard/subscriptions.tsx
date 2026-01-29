@@ -23,7 +23,7 @@ export function Subscriptions() {
 
   // Plan List State
   const [showPlanList, setShowPlanList] = useState(true);
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(false);
 

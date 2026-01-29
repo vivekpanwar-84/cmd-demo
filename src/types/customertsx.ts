@@ -20,3 +20,9 @@ export interface RegisterCustomerPayload {
   email: string;
   phone: string;
 }
+
+export interface UseOrganizationCustomerParams {
+  page: number;
+  limit: number;
+  search?: string;
+}
