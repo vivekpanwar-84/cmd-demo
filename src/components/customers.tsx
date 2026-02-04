@@ -11,6 +11,7 @@ import {
   Eye,
   List,
   LayoutGrid,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -27,6 +28,8 @@ import AddCustomerPage from "./organisationDetails/AddCustomer";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useOrganizationCustomer } from "@/hooks/useAdmin";
 import { Customer } from "@/types/customertsx";
+import AddInvoicePage from "./organisationDetails/AddInvoice";
+import { Invoice } from "@/types/invoice";
 
 /* ================= TYPES ================= */
 
@@ -43,6 +46,10 @@ export function Customers({ organizationId }: CustomersProps) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
+    null,
+  );
 
   const limit = 5;
   const debouncedSearch = useDebounce(search, 600);
@@ -54,7 +61,7 @@ export function Customers({ organizationId }: CustomersProps) {
       page,
       limit,
       search: debouncedSearch,
-    }
+    },
   );
 
   const customers: Customer[] = data?.data ?? [];
@@ -73,7 +80,7 @@ export function Customers({ organizationId }: CustomersProps) {
     const start = Math.max(1, Math.min(page, meta.totalPages - 2));
     return Array.from(
       { length: Math.min(3, meta.totalPages - start + 1) },
-      (_, i) => start + i
+      (_, i) => start + i,
     );
   };
 
@@ -133,9 +140,7 @@ export function Customers({ organizationId }: CustomersProps) {
             onBlur={(e) => handlePageChange(Number(e.target.value))}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handlePageChange(
-                  Number((e.target as HTMLInputElement).value)
-                );
+                handlePageChange(Number((e.target as HTMLInputElement).value));
               }
             }}
           />
@@ -191,7 +196,7 @@ export function Customers({ organizationId }: CustomersProps) {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                className="pl-8 w-[220px]"
+                className="pl-8 w-55"
                 placeholder="Search organization or plan..."
                 value={search}
                 onChange={(e) => {
@@ -225,7 +230,6 @@ export function Customers({ organizationId }: CustomersProps) {
             </div>
           </div>
         </div>
-
 
         {/* Loading */}
         {isLoading && (
@@ -266,18 +270,12 @@ export function Customers({ organizationId }: CustomersProps) {
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Created{" "}
-                            {new Date(
-                              customer.createdAt
-                            ).toLocaleDateString()}
+                            {new Date(customer.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-
-                      <div className="truncate">
-                        {customer.email ?? "—"}
-                      </div>
+                      <div className="truncate">{customer.email ?? "—"}</div>
                       <div>{customer.phone ?? "—"}</div>
-
                       <div className="flex justify-center">
                         <Link
                           href={`/customers/${customer._id}`}
@@ -286,6 +284,35 @@ export function Customers({ organizationId }: CustomersProps) {
                           <Eye className="w-4 h-4" />
                         </Link>
                       </div>
+
+                      {/* //add Invoice model */}
+
+                      <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
+                        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader className="sr-only">
+                            <DialogTitle>Add Invoice</DialogTitle>
+                          </DialogHeader>
+
+                          {selectedCustomerId && (
+                            <AddInvoicePage
+                              orgId={organizationId ?? ""}
+                              customerId={selectedCustomerId}
+                              onClose={() => setInvoiceOpen(false)}
+                            />
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        onClick={() => {
+                          setSelectedCustomerId(customer._id);
+                          setInvoiceOpen(true);
+                        }}
+                        className="bg-primary hover:bg-primary/90 text-white w-full"
+                        variant="default"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Add Invoice
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -304,17 +331,15 @@ export function Customers({ organizationId }: CustomersProps) {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {new Date(
-                                customer.createdAt
+                                customer.createdAt,
                               ).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
-
                         <div className="text-sm space-y-1">
                           <p>Email: {customer.email ?? "—"}</p>
                           <p>Phone: {customer.phone ?? "—"}</p>
                         </div>
-
                         <div className="flex justify-end">
                           <Link
                             href={`/customers/${customer._id}`}
@@ -324,6 +349,37 @@ export function Customers({ organizationId }: CustomersProps) {
                             View
                           </Link>
                         </div>
+
+                        {/* add invoice modal */}
+
+                        <Dialog
+                          open={invoiceOpen}
+                          onOpenChange={setInvoiceOpen}
+                        >
+                          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader className="sr-only">
+                              <DialogTitle>Add Invoice</DialogTitle>
+                            </DialogHeader>
+
+                            {selectedCustomerId && (
+                              <AddInvoicePage
+                                orgId={organizationId ?? ""}
+                                customerId={selectedCustomerId}
+                                onClose={() => setInvoiceOpen(false)}
+                              />
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          onClick={() => {
+                            setSelectedCustomerId(customer._id);
+                            setInvoiceOpen(true);
+                          }}
+                          className="bg-primary hover:bg-primary/90 text-white w-full"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Add Invoice
+                        </Button>
                       </CardContent>
                     </Card>
                   ))}

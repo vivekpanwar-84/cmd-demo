@@ -69,23 +69,24 @@ export function Invoices({ organizationId, useDummy = false }: InvoicesProps) {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [pageInput, setPageInput] = useState("1");
 
-  const limit = 10;
+  const limit = 5;
   const debouncedSearch = useDebounce(search, 600);
 
   /* ================= API / DUMMY ================= */
 
   const { data, isLoading, error } = useDummy
     ? {
-        data: dummyPagination(page, limit),
-        isLoading: false,
-        error: null,
-      }
+      data: dummyPagination(page, limit),
+      isLoading: false,
+      error: null,
+    }
     : useOrganizationInvoice(organizationId, {
-        page,
-        limit,
-        search: debouncedSearch,
-      });
+      page,
+      limit,
+      search: debouncedSearch,
+    });
 
   const invoices: Invoice[] = data?.data ?? [];
   const meta = data?.pagination ?? {
@@ -99,7 +100,9 @@ export function Invoices({ organizationId, useDummy = false }: InvoicesProps) {
 
   const handlePageChange = (newPage: number) => {
     if (!meta) return;
-    setPage(Math.min(Math.max(newPage, 1), meta.totalPages));
+    const validPage = Math.min(Math.max(newPage, 1), meta.totalPages);
+    setPage(validPage);
+    setPageInput(String(validPage));
   };
 
   const getSlidingPages = (): number[] => {
@@ -117,7 +120,7 @@ export function Invoices({ organizationId, useDummy = false }: InvoicesProps) {
     if (!meta || meta.totalPages <= 1) return null;
 
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 border-t">
         <p className="text-sm text-muted-foreground">
           Page {page} of {meta.totalPages}
         </p>
@@ -129,7 +132,7 @@ export function Invoices({ organizationId, useDummy = false }: InvoicesProps) {
             disabled={page === 1}
             onClick={() => handlePageChange(page - 1)}
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="mr-2 h-4 w-4" />
           </Button>
 
           {getSlidingPages().map((p) => (
@@ -149,7 +152,7 @@ export function Invoices({ organizationId, useDummy = false }: InvoicesProps) {
             disabled={page === meta.totalPages}
             onClick={() => handlePageChange(page + 1)}
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronLeft className="rotate-180 ml-2 h-4 w-4" />
           </Button>
         </div>
 
@@ -159,14 +162,13 @@ export function Invoices({ organizationId, useDummy = false }: InvoicesProps) {
             type="number"
             min={1}
             max={meta.totalPages}
-            defaultValue={page}
-            className="w-20 h-8"
-            onBlur={(e) => handlePageChange(Number(e.target.value))}
+            value={pageInput}
+            className="w-20 h-8 text-center"
+            onChange={(e) => setPageInput(e.target.value)}
+            onBlur={() => handlePageChange(Number(pageInput))}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handlePageChange(
-                  Number((e.target as HTMLInputElement).value)
-                );
+                handlePageChange(Number(pageInput));
               }
             }}
           />

@@ -54,7 +54,7 @@ export function Dashboard() {
     );
   }
 
-  const { totalOrgs, totalUsers, totalCustomers, invoiceStats } = statsData;
+  const { totalOrgs, totalUsers, totalStaff, totalCustomers, invoiceStats } = statsData;
 
   const totalDueAmount = invoiceStats.reduce(
     (acc, curr) => acc + curr.totalAmount,
@@ -68,8 +68,8 @@ export function Dashboard() {
       icon: Building2
     },
     {
-      title: "Total Users",
-      value: totalUsers.toLocaleString(),
+      title: "Total Staff",
+      value: totalStaff.toLocaleString(),
       icon: Users
     },
     {

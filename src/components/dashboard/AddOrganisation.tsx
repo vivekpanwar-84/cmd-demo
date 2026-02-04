@@ -13,12 +13,12 @@ import { useCreateOrganization } from "@/hooks/useAdmin";
 
 type FormValues = z.infer<typeof createOrganizationSchema>;
 
-export default function AddOrganizationPage() {
-  const { 
-    register, 
-    handleSubmit, 
-    reset, 
-    formState: { errors, isSubmitting } 
+export default function AddOrganizationPage({ onClose }: { onClose?: () => void }) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting }
   } = useForm<FormValues>({
     resolver: zodResolver(createOrganizationSchema),
     mode: "onTouched",
@@ -30,7 +30,8 @@ export default function AddOrganizationPage() {
     createOrganization.mutate(data, {
       onSuccess: () => {
         reset();
-        alert("Organization created successfully!");
+        // alert("Organization created successfully!");
+        onClose?.();
       },
       onError: (error: unknown) => {
         console.error("Failed to create organization", error);
@@ -39,15 +40,7 @@ export default function AddOrganizationPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Add Organization</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Create a new organization and its admin account
-        </p>
-      </div>
-
+    <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Organization Details */}
         <Card>
@@ -66,10 +59,10 @@ export default function AddOrganizationPage() {
                     field === "orgName"
                       ? "Organization Name"
                       : field === "country"
-                      ? "Country"
-                      : field === "timezone"
-                      ? "Timezone"
-                      : "Currency (USD / INR)"
+                        ? "Country"
+                        : field === "timezone"
+                          ? "Timezone"
+                          : "Currency (USD / INR)"
                   }
                   {...register(field as keyof FormValues)}
                   className={
@@ -106,10 +99,10 @@ export default function AddOrganizationPage() {
                     field === "adminName"
                       ? "Admin Name"
                       : field === "email"
-                      ? "Admin Email"
-                      : field === "password"
-                      ? "Password"
-                      : "Phone Number"
+                        ? "Admin Email"
+                        : field === "password"
+                          ? "Password"
+                          : "Phone Number"
                   }
                   {...register(field as keyof FormValues)}
                   className={
@@ -130,7 +123,7 @@ export default function AddOrganizationPage() {
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => reset()}>
+          <Button type="button" variant="outline" onClick={() => onClose?.()}>
             Cancel
           </Button>
 

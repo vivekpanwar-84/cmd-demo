@@ -110,10 +110,10 @@ export const adminService = {
     return response.data.data;
   },
   getOrganizationById: async (orgId: string): Promise<OrganizationDetail> => {
-    const res = await api.get<ApiResponseOrganizationDetail<OrganizationDetail>>(
+    const res = await api.get<ApiResponseOrganizationDetail<OrganizationDetail[]>>(
       `/admin/organizations/${orgId}`
     );
-    return res.data.data;
+    return res.data.data[0];
   },
   getInvoicesByOrg: async (
     orgId: string,
@@ -198,4 +198,26 @@ export const adminService = {
     const response = await api.delete(`/admin/adminstaff/${staffId}`);
     return response.data;
   },
+
+  /* INVOICES */
+  createInvoice: async (
+    orgId: string,
+    customerId: string,
+    data: {
+      invoice_number: string;
+      issue_date: string;
+      due_date: string;
+      total_amount: number;
+      paid_amount: number;
+    }
+  ) => {
+    const response = await api.post(
+      `/admin/organizations/${orgId}/invoices/${customerId}`,
+      data
+    );
+    return response.data;
+  },
+
+
+
 };

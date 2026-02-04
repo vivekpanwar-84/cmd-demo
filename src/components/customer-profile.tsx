@@ -14,7 +14,7 @@ interface CustomerProfileProps {
 }
 
 const mockCustomerData = {
-  '6979dcffc90088095de647c8': {
+  '697c29bc4013f4e41d8e68c7': {
     name: 'John Smith',
     email: 'john@example.com',
     phone: '+1 234 567 8900',
@@ -290,7 +290,7 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
                   placeholder="Add a note about this customer..."
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  className="min-h-[100px] bg-white border-gray-200 rounded-lg"
+                  className="min-h-25 bg-white border-gray-200 rounded-lg"
                 />
                 <Button
                   className="bg-primary hover:bg-primary/90 text-white"

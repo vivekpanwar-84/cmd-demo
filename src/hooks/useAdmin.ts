@@ -11,7 +11,7 @@ import {
   OrganizationDetail,
   OrganizationUser
 } from "@/types/organizationdetail";
-import { ApiResponse, Invoice } from "@/types/invoice";
+import { CreateInvoicePayload, Invoice } from "@/types/orgInvoices";
 
 /* =========================
    DASHBOARD
@@ -278,3 +278,33 @@ export const useOrganizationInvoice = (
     // keepPreviousData: true,
   });
 };
+
+
+
+
+export function useCreateInvoice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orgId,
+      customerId,
+      data,
+    }: {
+      orgId: string;
+      customerId: string;
+      data: CreateInvoicePayload;
+    }): Promise<Invoice> => {
+      return adminService.createInvoice(orgId, customerId, data);
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    },
+  });
+}
+
+
+
+

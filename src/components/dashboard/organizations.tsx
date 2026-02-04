@@ -4,10 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useOrganizations } from "@/hooks/useAdmin"; // new paginated hook
-import { 
+import {
   Search, Building2, Users, UsersRound, FileText,
   CheckCircle, XCircle, Loader2, LayoutGrid, List,
-  ChevronDown, Eye, Globe, ChevronLeft, ChevronRight 
+  ChevronDown, Eye, Globe, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +20,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Organization } from "@/types/organization";
+import AddOrganizationPage from "./AddOrganisation";
 
 /* ================= TYPES ================= */
 type ViewMode = "list" | "card";
@@ -35,6 +42,7 @@ export function Organizations() {
   const [limit] = useState(5);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -76,68 +84,78 @@ export function Organizations() {
           </p> */}
         </div>
 
-        <Button className="bg-primary hover:bg-primary/90 text-white" asChild>
-          <Link href="/organizations/add">
-            <Building2 className="w-4 h-4 mr-2" />
-            Add Organization
-          </Link>
+        <Button
+          className="bg-primary hover:bg-primary/90 text-white"
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          <Building2 className="w-4 h-4 mr-2" />
+          Add Organization
         </Button>
       </div>
 
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Organization</DialogTitle>
+          </DialogHeader>
+          <AddOrganizationPage onClose={() => setIsAddModalOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
       {/* Search / Sort / View */}
       {/* Search / Sort / View */}
-<div className="flex items-center justify-between">
-  {/* Left description */}
-  <p className="text-muted-foreground">
-    Manage all your client organizations
-  </p>
+      <div className="flex items-center justify-between">
+        {/* Left description */}
+        <p className="text-muted-foreground">
+          Manage all your client organizations
+        </p>
 
-  {/* Right controls */}
-  <div className="flex items-center gap-2">
-    {/* Search input */}
-    <div className="relative">
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-      <Input
-        className="pl-8 w-[220px]"
-        placeholder="Search staff..."
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1); // reset to first page on search
-        }}
-      />
-    </div>
+        {/* Right controls */}
+        <div className="flex items-center gap-2">
+          {/* Search input */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-8 w-[220px]"
+              placeholder="Search staff..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1); // reset to first page on search
+              }}
+            />
+          </div>
 
-    {/* View toggle */}
-    <div className="flex items-center border rounded-md overflow-hidden">
-      <Button
-        variant={viewMode === "list" ? "secondary" : "ghost"}
-        size="sm"
-        className="rounded-none h-8 w-8 p-0"
-        onClick={() => setViewMode("list")}
-      >
-        <List className="h-4 w-4" />
-      </Button>
+          {/* View toggle */}
+          <div className="flex items-center border rounded-md overflow-hidden">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-none h-8 w-8 p-0"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
 
-      <div className="w-px h-4 bg-border" />
+            <div className="w-px h-4 bg-border" />
 
-      <Button
-        variant={viewMode === "card" ? "secondary" : "ghost"}
-        size="sm"
-        className="rounded-none h-8 w-8 p-0"
-        onClick={() => setViewMode("card")}
-      >
-        <LayoutGrid className="h-4 w-4" />
-      </Button>
-    </div>
-  </div>
-</div>
+            <Button
+              variant={viewMode === "card" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-none h-8 w-8 p-0"
+              onClick={() => setViewMode("card")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
 
 
       {/* Loading */}
       {isLoading && (
         <div className="flex justify-center py-10">
-          <Loader2 className="w-8 h-8 animate-spin text-primary"/>
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       )}
 
@@ -162,19 +180,19 @@ export function Organizations() {
                     <div>
                       <h3 className="font-semibold text-lg">{org.name}</h3>
                       <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                        <Globe className="w-4 h-4"/>
+                        <Globe className="w-4 h-4" />
                         {org.country ?? "N/A"}
                       </div>
                     </div>
 
-                    <Badge className={org.plan_status==="active" ? "bg-green-100 text-green-700":"bg-red-100 text-red-700"}>
+                    <Badge className={org.plan_status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
                       {org.plan_status ?? "unknown"}
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4 border-t pt-5 text-sm">
                     <div className="flex items-center gap-2">
-                      <UsersRound className="w-4 h-4 text-gray-400"/>
+                      <UsersRound className="w-4 h-4 text-gray-400" />
                       <div>
                         <p className="text-gray-500">Staff</p>
                         <p className="font-semibold">{usage.staff}/{limits.staff}</p>
@@ -182,7 +200,7 @@ export function Organizations() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-400"/>
+                      <Users className="w-4 h-4 text-gray-400" />
                       <div>
                         <p className="text-gray-500">Customers</p>
                         <p className="font-semibold">{usage.customers}/{limits.customers}</p>
@@ -190,7 +208,7 @@ export function Organizations() {
                     </div>
 
                     <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
-                      <FileText className="w-5 h-5 text-primary"/>
+                      <FileText className="w-5 h-5 text-primary" />
                       <div>
                         <p className="text-xs text-gray-500 uppercase">Invoices</p>
                         <p className="font-semibold">{usage.invoices}/{limits.invoices}</p>
@@ -229,7 +247,7 @@ export function Organizations() {
                   <div key={org._id} className="grid grid-cols-7 gap-4 px-4 py-4 items-center border-b hover:bg-gray-50 text-center">
                     <div className="col-span-2 flex items-center gap-3 text-left">
                       <div className="w-9 h-9 bg-accent rounded-md flex items-center justify-center">
-                        <Building2 className="w-4 h-4 text-primary"/>
+                        <Building2 className="w-4 h-4 text-primary" />
                       </div>
                       <div>
                         <p className="font-medium">{org.name}</p>
@@ -242,20 +260,21 @@ export function Organizations() {
                     <div className="font-medium">{usage.invoices}</div>
 
                     <div className="flex justify-center">
-                      {org.plan_status==="active"?(
-                        <div className="flex items-center gap-1 text-green-600"><CheckCircle className="w-5 h-5"/></div>
-                      ):(
-                        <div className="flex items-center gap-1 text-red-600"><XCircle className="w-5 h-5"/></div>
+                      {org.plan_status === "active" ? (
+                        <div className="flex items-center gap-1 text-green-600"><CheckCircle className="w-5 h-5" /></div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-red-600"><XCircle className="w-5 h-5" /></div>
                       )}
                     </div>
 
                     <div className="flex justify-center">
                       <Link href={`/organizations/${org._id}`} className="p-2 rounded-md hover:bg-accent">
-                        <Eye className="w-4 h-4 text-gray-600 hover:text-primary"/>
+                        <Eye className="w-4 h-4 text-gray-600 hover:text-primary" />
                       </Link>
                     </div>
                   </div>
-              )})}
+                )
+              })}
 
               {/* Pagination */}
               {meta && meta.totalPages > 1 && (
@@ -273,14 +292,14 @@ export function Organizations() {
                       disabled={page === 1}
                       onClick={() => handlePageChange(page - 1)}
                     >
-                      <ChevronLeft className="w-4 h-4"/>
+                      <ChevronLeft className="w-4 h-4" />
                     </Button>
 
                     {getSlidingPages().map(p => (
                       <Button
                         key={p}
                         size="sm"
-                        variant={p===page ? "default":"outline"}
+                        variant={p === page ? "default" : "outline"}
                         onClick={() => handlePageChange(p)}
                       >
                         {p}
@@ -293,7 +312,7 @@ export function Organizations() {
                       disabled={page === meta.totalPages}
                       onClick={() => handlePageChange(page + 1)}
                     >
-                      <ChevronRight className="w-4 h-4"/>
+                      <ChevronRight className="w-4 h-4" />
                     </Button>
                   </div>
 
@@ -306,9 +325,9 @@ export function Organizations() {
                       max={meta.totalPages}
                       defaultValue={page}
                       className="w-20 h-8"
-                      onBlur={(e)=>handlePageChange(Number(e.target.value))}
-                      onKeyDown={(e)=>{
-                        if(e.key==="Enter"){
+                      onBlur={(e) => handlePageChange(Number(e.target.value))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
                           handlePageChange(Number((e.target as HTMLInputElement).value))
                         }
                       }}
