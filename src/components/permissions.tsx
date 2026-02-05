@@ -22,13 +22,14 @@ const ALL_PERMISSIONS = [
     "View Invoices"
 ];
 
-type Role = 'Admin' | 'Admin Staff';
+type Role = 'Admin' | 'Admin Staff' | 'Manager';
 
 export default function Permissions() {
     const [selectedRole, setSelectedRole] = useState<Role | null>('Admin');
     const [rolePermissions, setRolePermissions] = useState<Record<Role, string[]>>({
         Admin: [...ALL_PERMISSIONS],
-        "Admin Staff": ["View Staff", "View Customer", "Create Customer", "Delete Customer", "Update Customer", "View Invoices"]
+        "Admin Staff": ["View Staff", "View Customer", "Create Customer", "Delete Customer", "Update Customer", "View Invoices"],
+        Manager: [...ALL_PERMISSIONS]
     });
 
     const togglePermission = (permission: string) => {
@@ -79,6 +80,17 @@ export default function Permissions() {
                             )}
                         >
                             Admin Staff
+                        </button>
+                        <button
+                            onClick={() => setSelectedRole('Manager')}
+                            className={cn(
+                                "w-full flex items-center px-4 py-3 rounded-lg font-medium transition-all text-sm",
+                                selectedRole === 'Manager'
+                                    ? "bg-primary text-white shadow-sm"
+                                    : "text-gray-600 hover:bg-gray-100"
+                            )}
+                        >
+                            Manager
                         </button>
                     </div>
                 </div>

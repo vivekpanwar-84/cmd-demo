@@ -6,7 +6,7 @@ export interface InvoiceCustomer {
 
 export interface Invoice {
   _id: string;
-  org_id: string;
+  org_id: string | { _id: string; full_name: string };
 
   customer_id: InvoiceCustomer | null;
 
@@ -35,4 +35,12 @@ export interface Invoice {
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
+}
+
+export interface RegisterInvoicePayload {
+  invoice_number: string;
+  issue_date: string;
+  due_date: string;
+  total_amount: number;
+  paid_amount: number;
 }

@@ -97,7 +97,7 @@ export function Subscriptions() {
             onClick={() => setShowAssignModal(true)}
           >
             <ArrowRightLeft className="w-4 h-4 mr-2" />
-            Assign / Change Plan
+            Assign Plan
           </Button>
         </div>
       </div>

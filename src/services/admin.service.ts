@@ -1,4 +1,5 @@
 import { ApiResponseOrganizationDetail, OrganizationDetail, RegisterOrganizationPayload } from '@/types/organizationdetail';
+import { RegisterInvoicePayload } from '@/types/invoice';
 // import api from "@/lib/axios";
 
 // import {
@@ -200,24 +201,15 @@ export const adminService = {
   },
 
   /* INVOICES */
-  createInvoice: async (
-    orgId: string,
-    customerId: string,
-    data: {
-      invoice_number: string;
-      issue_date: string;
-      due_date: string;
-      total_amount: number;
-      paid_amount: number;
-    }
-  ) => {
-    const response = await api.post(
-      `/admin/organizations/${orgId}/invoices/${customerId}`,
-      data
-    );
+  createInvoice: async (orgId: string, customerId: string, data: RegisterInvoicePayload) => {
+    const response = await api.post(`/admin/organizations/${orgId}/invoices/${customerId}`, data);
     return response.data;
   },
 
+  getCustomerInvoices: async (customerId: string) => {
+    const response = await api.get(`/admin/org/customer/${customerId}`);
+    return response.data;
+  },
 
 
 };

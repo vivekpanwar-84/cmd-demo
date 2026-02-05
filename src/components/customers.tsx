@@ -93,57 +93,45 @@ export function Customers({ organizationId }: CustomersProps) {
     if (!meta || meta.totalPages <= 1) return null;
 
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t">
-        <p className="text-sm text-muted-foreground">
-          Page {page} of {meta.totalPages}
+      <div className="flex items-center justify-between gap-4 px-4 py-4 border-t bg-gray-50/50 rounded-b-xl">
+        <p className="text-sm text-gray-500">
+          Page <span className="font-medium text-gray-900">{page}</span> of <span className="font-medium text-gray-900">{meta.totalPages}</span>
         </p>
 
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            disabled={page === 1}
             onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+            className="h-8 w-8 p-0"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
           </Button>
 
-          {getSlidingPages().map((p) => (
-            <Button
-              key={p}
-              size="sm"
-              variant={p === page ? "default" : "outline"}
-              onClick={() => handlePageChange(p)}
-            >
-              {p}
-            </Button>
-          ))}
+          <div className="flex items-center gap-1">
+            {getSlidingPages().map((p) => (
+              <Button
+                key={p}
+                size="sm"
+                variant={p === page ? "default" : "outline"}
+                onClick={() => handlePageChange(p)}
+                className={`h-8 w-8 p-0 ${p === page ? 'bg-orange-600 hover:bg-orange-700 border-orange-600' : 'text-gray-600'}`}
+              >
+                {p}
+              </Button>
+            ))}
+          </div>
 
           <Button
             variant="outline"
             size="sm"
-            disabled={page === meta.totalPages}
             onClick={() => handlePageChange(page + 1)}
+            disabled={page === meta.totalPages}
+            className="h-8 w-8 p-0"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4 text-gray-600" />
           </Button>
-        </div>
-
-        <div className="flex items-center gap-2 text-sm">
-          <span>Go to page:</span>
-          <Input
-            type="number"
-            min={1}
-            max={meta.totalPages}
-            defaultValue={page}
-            className="w-20 h-8"
-            onBlur={(e) => handlePageChange(Number(e.target.value))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handlePageChange(Number((e.target as HTMLInputElement).value));
-              }
-            }}
-          />
         </div>
       </div>
     );
@@ -197,7 +185,7 @@ export function Customers({ organizationId }: CustomersProps) {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-8 w-55"
-                placeholder="Search organization or plan..."
+                placeholder="Search Customer..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);

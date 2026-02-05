@@ -305,6 +305,14 @@ export function useCreateInvoice() {
   });
 }
 
+export const useCustomerInvoices = (customerId: string) => {
+  const { isAuthenticated } = useAuth();
 
+  return useQuery({
+    queryKey: ["customer", "composite", customerId],
+    queryFn: () => adminService.getCustomerInvoices(customerId),
+    enabled: Boolean(isAuthenticated && customerId),
+  });
+};
 
 

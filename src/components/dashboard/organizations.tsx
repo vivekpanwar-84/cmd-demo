@@ -117,7 +117,7 @@ export function Organizations() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               className="pl-8 w-[220px]"
-              placeholder="Search staff..."
+              placeholder="Search Organizations..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);

@@ -8,9 +8,13 @@ import { useState } from 'react';
 import { ReminderModal } from './reminder-modal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useCustomerInvoices } from '@/hooks/useAdmin';
+import { Loader2 } from 'lucide-react';
+import { Invoice as BackendInvoice } from '@/types/invoice';
 
 interface InvoiceDetailProps {
   invoiceId: string;
+  customerId?: string;
 }
 
 interface Invoice {
@@ -65,10 +69,45 @@ const mockInvoiceData: Record<string, Invoice> = {
   },
 };
 
-export function InvoiceDetail({ invoiceId }: InvoiceDetailProps) {
+export function InvoiceDetail({ invoiceId, customerId }: InvoiceDetailProps) {
   const router = useRouter();
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
-  const invoice = mockInvoiceData[invoiceId];
+
+  const { data: invoicesData, isLoading } = useCustomerInvoices(customerId ?? '');
+  const customerData = (invoicesData as any)?.data?.customer;
+  const invoices: BackendInvoice[] = (invoicesData as any)?.data?.invoices ?? [];
+  const backendInvoice = invoices.find(inv => inv.invoice_number === invoiceId);
+
+  // If we have backend data, we'll merge it with mock data for fields not in backend
+  const invoice = backendInvoice ? {
+    id: backendInvoice.invoice_number,
+    customer: {
+      name: customerData?.full_name || 'Customer',
+      email: customerData?.email || 'customer@example.com',
+      phone: customerData?.phone || backendInvoice.customer_id?.phone || '—',
+      company: typeof backendInvoice.org_id === 'object' ? (backendInvoice.org_id as any).name : '—',
+      address: '—'
+    },
+    date: new Date(backendInvoice.issue_date).toLocaleDateString(),
+    dueDate: new Date(backendInvoice.due_date).toLocaleDateString(),
+    status: backendInvoice.status === 'pending' ? 'due' : (backendInvoice.status === 'paid' ? 'paid' : 'due'),
+    items: [
+      { id: '1', description: 'Services Rendered', quantity: 1, rate: backendInvoice.total_amount, amount: backendInvoice.total_amount },
+    ],
+    subtotal: backendInvoice.total_amount,
+    tax: 0,
+    total: backendInvoice.total_amount,
+    paid: backendInvoice.paid_amount,
+    notes: 'Payment information fetched from backend.'
+  } : mockInvoiceData[invoiceId];
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!invoice) {
     return (
@@ -99,42 +138,52 @@ export function InvoiceDetail({ invoiceId }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <Button variant="ghost" className="gap-2" onClick={() => router.back()}>
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </Button>
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-10 h-10 bg-orange-50 hover:bg-orange-100 rounded-full flex items-center justify-center shrink-0"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="w-5 h-5 text-orange-600" />
+            </Button>
 
-      {/* Invoice Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-accent rounded-xl flex items-center justify-center">
-            <FileText className="w-8 h-8 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold text-gray-900">{invoice.id}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge className={getStatusColor(invoice.status)}>
-                {invoice.status.toUpperCase()}
-              </Badge>
-              <span className="text-sm text-gray-500">•</span>
-              <span className="text-sm text-gray-500">Due: {invoice.dueDate}</span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center border border-orange-100">
+                  <FileText className="w-5 h-5 text-orange-600" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-semibold text-gray-900 leading-none">{invoice.id}</h1>
+                  <Badge className={getStatusColor(invoice.status as any)}>
+                    {invoice.status.toUpperCase()}
+                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">•</span>
+                    <span className="text-sm text-gray-500 font-medium">Due: {invoice.dueDate}</span>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline">
-            Download PDF
-          </Button>
-          {!isPaid && (
-            <Button
-              className="bg-primary hover:bg-primary/90 text-white gap-2"
-              onClick={() => setReminderModalOpen(true)}
-            >
-              <Bell className="w-4 h-4" />
-              Send Reminder
+
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline">
+              Download PDF
             </Button>
-          )}
+            {!isPaid && (
+              <Button
+                className="bg-primary hover:bg-primary/90 text-white gap-2"
+                onClick={() => setReminderModalOpen(true)}
+              >
+                <Bell className="w-4 h-4" />
+                Send Reminder
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -164,10 +213,10 @@ export function InvoiceDetail({ invoiceId }: InvoiceDetailProps) {
                   <Phone className="w-5 h-5 text-gray-400" />
                   <p className="text-sm text-gray-600">{invoice.customer.phone}</p>
                 </div>
-                <Separator />
-                <div className="text-sm text-gray-600">
+                {/* <Separator /> */}
+                {/* <div className="text-sm text-gray-600">
                   {invoice.customer.address}
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>

@@ -13,7 +13,7 @@ import {
   Check,
   Search,
 } from "lucide-react";
-
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,6 +38,7 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
   const orgMenuRef = useRef<HTMLDivElement>(null);
   const [orgSearch, setOrgSearch] = useState("");
   const [activeTab, setActiveTab] = useState("customers");
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -95,12 +96,10 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
           <Button
             variant="ghost"
             size="icon"
-            className="bg-orange-50 hover:bg-orange-100 rounded-full shadow-sm"
-            asChild
+            className="w-10 h-10 bg-orange-50 hover:bg-orange-100 rounded-full flex items-center justify-center shrink-0"
+            onClick={() => router.back()}
           >
-            <Link href="/organizations">
-              <ArrowLeft className="w-4 h-4 text-orange-600" />
-            </Link>
+            <ArrowLeft className="w-5 h-5 text-orange-600" />
           </Button>
 
 

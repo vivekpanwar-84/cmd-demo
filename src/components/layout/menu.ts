@@ -30,14 +30,14 @@ export const MENU_ITEMS = [
     icon: UsersRound,
   },
   {
-    id: "subscriptions",
-    label: "Subscriptions",
+    id: "Plans",
+    label: "Plans",
     href: "/subscriptions",
     icon: CreditCard,
   },
   {
-    id: "plans",
-    label: "OrganizationPlans",
+    id: "subscriptions",
+    label: "Subcriptions",
     href: "/plans",
     icon: Wallet,
   },
