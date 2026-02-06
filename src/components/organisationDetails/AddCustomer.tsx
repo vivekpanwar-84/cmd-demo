@@ -8,17 +8,22 @@ import { User, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { createCustomerSchema } from "@/lib/Schema/AddCustomerValidation";
-import { useCreateCustomer } from "@/hooks/useAdmin";
+import { useCreateCustomer, useUpdateCustomer } from "@/hooks/useAdmin";
+import { useEffect } from "react";
+import { Customer } from "@/types/customertsx";
 
 type FormValues = z.infer<typeof createCustomerSchema>;
 
 export default function AddCustomerPage({
   organizationId,
   onClose,
+  initialData,
 }: {
   organizationId: string;
   onClose: () => void;
+  initialData?: Customer;
 }) {
   const {
     register,
@@ -28,23 +33,49 @@ export default function AddCustomerPage({
   } = useForm<FormValues>({
     resolver: zodResolver(createCustomerSchema),
     mode: "onTouched",
+    defaultValues: initialData || {},
   });
 
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
+
   const createCustomer = useCreateCustomer(organizationId);
+  const updateCustomer = useUpdateCustomer(organizationId);
 
   const onSubmit: SubmitHandler<FormValues> = (data) => {
-    createCustomer.mutate(data, {
-      onSuccess: () => {
-        reset();
-        onClose(); // ✅ close dialog
-      },
-      onError: (err) => {
-        console.error("Failed to create customer", err);
-      },
-    });
+    if (initialData) {
+      updateCustomer.mutate(
+        { customerId: initialData._id, data },
+        {
+          onSuccess: () => {
+            toast.success("Customer updated successfully");
+            onClose();
+          },
+          onError: (err) => {
+            console.error("Failed to update customer", err);
+            toast.error("Failed to update customer");
+          },
+        },
+      );
+    } else {
+      createCustomer.mutate(data, {
+        onSuccess: () => {
+          toast.success("Customer created successfully");
+          reset();
+          onClose(); // ✅ close dialog
+        },
+        onError: (err) => {
+          console.error("Failed to create customer", err);
+          toast.error("Failed to create customer");
+        },
+      });
+    }
   };
 
-  const isLoading = isSubmitting || createCustomer.isPending;
+  const isLoading = isSubmitting || createCustomer.isPending || updateCustomer.isPending;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -70,7 +101,8 @@ export default function AddCustomerPage({
 
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Full Name */}
-            <div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Full Name</label>
               <Input
                 placeholder="Full Name"
                 {...register("full_name")}
@@ -88,7 +120,8 @@ export default function AddCustomerPage({
             </div>
 
             {/* Email */}
-            <div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Email</label>
               <Input
                 placeholder="Email"
                 {...register("email")}
@@ -106,15 +139,28 @@ export default function AddCustomerPage({
             </div>
 
             {/* Phone */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 space-y-1">
+              <label className="text-sm font-medium text-gray-700">Phone</label>
               <Input
                 placeholder="Phone"
+                type="number"
                 {...register("phone")}
-                className={
-                  errors.phone
-                    ? "border-red-500 focus:ring-red-200"
-                    : "border-gray-300 focus:border-primary focus:ring-primary/20"
-                }
+                onKeyDown={(e) => {
+                  // Prevent typing 'e', '+', '-', '.'
+                  if (["e", "E", "+", "-", "."].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (target.value.length > 10) {
+                    target.value = target.value.slice(0, 10);
+                  }
+                }}
+                className={`[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${errors.phone
+                  ? "border-red-500 focus:ring-red-200"
+                  : "border-gray-300 focus:border-primary focus:ring-primary/20"
+                  }`}
               />
               {errors.phone && (
                 <p className="mt-1 text-xs text-red-500">
@@ -144,7 +190,7 @@ export default function AddCustomerPage({
             {isLoading && (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             )}
-            Create Customer
+            {initialData ? "Update Customer" : "Create Customer"}
           </Button>
         </div>
       </form>

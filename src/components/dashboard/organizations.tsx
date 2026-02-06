@@ -9,6 +9,7 @@ import {
   CheckCircle, XCircle, Loader2, LayoutGrid, List,
   ChevronDown, Eye, Globe, ChevronLeft, ChevronRight
 } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,11 +39,24 @@ type SortKey = "name" | "staff" | "customers" | "invoices" | "status";
 /* ================= COMPONENT ================= */
 
 export function Organizations() {
-  const [page, setPage] = useState(1);
-  const [limit] = useState(5);
   const [search, setSearch] = useState("");
+  const [limit] = useState(5);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Get page from URL or default to 1
+  const urlPage = Number(searchParams.get("page")) || 1;
+  const page = urlPage;
+
+  const setPage = (p: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", p.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -233,10 +247,10 @@ export function Organizations() {
             <div className="max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-7 gap-4 px-4 py-3 text-sm font-medium text-gray-500 border-b sticky top-0 bg-white z-10">
                 <div className="col-span-2 text-left">Organization</div>
-                <div>Staff</div>
-                <div>Customers</div>
-                <div>Invoices</div>
-                <div>Status</div>
+                <div className="text-center">Staff</div>
+                <div className="text-center">Customers</div>
+                <div className="text-center">Invoices</div>
+                <div className="text-center">Status</div>
                 <div className="text-center">Action</div>
               </div>
 
@@ -323,9 +337,9 @@ export function Organizations() {
                       type="number"
                       min={1}
                       max={meta.totalPages}
-                      defaultValue={page}
-                      className="w-20 h-8"
-                      onBlur={(e) => handlePageChange(Number(e.target.value))}
+                      value={page}
+                      className="w-20 h-8 text-center"
+                      onChange={(e) => handlePageChange(Number(e.target.value))}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           handlePageChange(Number((e.target as HTMLInputElement).value))

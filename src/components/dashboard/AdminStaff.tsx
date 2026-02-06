@@ -70,9 +70,7 @@ export function AdminStaff({ organizationId }: StaffProps) {
     setPageInput(String(validPage));
   };
 
-  const staffUsed = pagination.total || staffList.length;
-  const staffLimit = 50;
-  const usagePercentage = (staffUsed / staffLimit) * 100;
+
 
   if (isLoading && !debouncedSearch) {
     return (
@@ -99,7 +97,7 @@ export function AdminStaff({ organizationId }: StaffProps) {
         setOpen(val);
         if (!val) setEditingStaff(null);
       }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none shadow-2xl rounded-2xl">
           <DialogHeader className="sr-only">
             <DialogTitle>{editingStaff ? "Edit Staff" : "Add Staff"}</DialogTitle>
           </DialogHeader>
@@ -119,11 +117,11 @@ export function AdminStaff({ organizationId }: StaffProps) {
       {/* Usage Card */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 ">
             <div>
               <h3 className="font-semibold">Staff Usage</h3>
               <p className="text-sm text-muted-foreground">
-                {staffUsed} of {staffLimit} staff members
+                Manage all Admin Staff members
               </p>
             </div>
 
@@ -132,23 +130,11 @@ export function AdminStaff({ organizationId }: StaffProps) {
               Add Staff Member
             </Button>
           </div>
-
-          <Progress value={usagePercentage} />
-
-          {usagePercentage > 80 && (
-            <div className="flex items-center gap-2 mt-3 text-sm text-orange-600">
-              <AlertCircle className="w-4 h-4" />
-              <span>
-                You’re approaching your staff limit. Consider upgrading your
-                plan.
-              </span>
-            </div>
-          )}
         </CardContent>
       </Card>
 
       {/* Search Bar */}
-      <div className="relative">
+      <div className="relative w-full sm:w-[320px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name or email..."
@@ -161,7 +147,7 @@ export function AdminStaff({ organizationId }: StaffProps) {
       {/* Desktop Table View */}
       <Card className="hidden md:block">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Staff Members</CardTitle>
+          <CardTitle className="text-muted-foreground">Staff Members</CardTitle>
           <div className="text-sm text-muted-foreground">
             Total {pagination.total} staff members
           </div>

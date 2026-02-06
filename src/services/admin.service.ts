@@ -177,6 +177,10 @@ export const adminService = {
     const response = await api.post(`/admin/organizations/${org_id}/staff`, data);
     return response.data;
   },
+  updateStaff: async (staffId: string, data: Partial<RegisterStaffPayload>) => {
+    const response = await api.patch(`/admin/staff/${staffId}`, data);
+    return response.data;
+  },
   getAdminStaff: async (page: number = 1, limit: number = 10, org_id?: string, search?: string): Promise<ApiResponseAdminStaff> => {
     const response = await api.get<ApiResponseAdminStaff>(`/admin/adminstaff`, {
       params: { page, limit, org_id, search },
@@ -199,15 +203,27 @@ export const adminService = {
     const response = await api.delete(`/admin/adminstaff/${staffId}`);
     return response.data;
   },
-
-  /* INVOICES */
-  createInvoice: async (orgId: string, customerId: string, data: RegisterInvoicePayload) => {
-    const response = await api.post(`/admin/organizations/${orgId}/invoices/${customerId}`, data);
+  deleteStaff: async (staffId: string) => {
+    const response = await api.delete(`/admin/staff/${staffId}`);
+    return response.data;
+  },
+  deleteCustomer: async (customerId: string) => {
+    const response = await api.delete(`/admin/customers/${customerId}`);
+    return response.data;
+  },
+  updateCustomer: async (customerId: string, data: Partial<RegisterCustomerPayload>) => {
+    const response = await api.patch(`/admin/customers/${customerId}`, data);
     return response.data;
   },
 
-  getCustomerInvoices: async (customerId: string) => {
-    const response = await api.get(`/admin/org/customer/${customerId}`);
+  /* INVOICES */
+  createInvoice: async (orgId: string, customerId: string, data: RegisterInvoicePayload) => {
+    const response = await api.post(`/admin/org/${orgId}/invoices/${customerId}`, data);
+    return response.data;
+  },
+
+  getCustomerInvoices: async (customerId: string, params?: { page: number; limit: number }) => {
+    const response = await api.get(`/admin/org/customer/${customerId}`, { params });
     return response.data;
   },
 

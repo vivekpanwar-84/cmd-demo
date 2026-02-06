@@ -13,7 +13,7 @@ import {
   Check,
   Search,
 } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,8 +37,18 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
   const orgMenuRef = useRef<HTMLDivElement>(null);
   const [orgSearch, setOrgSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("customers");
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const activeTab = searchParams.get("tab") || "customers";
+
+  const setActiveTab = (tab: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

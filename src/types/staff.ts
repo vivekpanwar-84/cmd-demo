@@ -66,7 +66,7 @@ export type StaffPermission =
   | "CREATE_ORGANIZATION"
   | "VIEW_STAFF"
   | "CREATE_STAFF"
-  | "VIEW_CUSTOMER"
+  | "VIEW_CUSTOMERS"
   | "CREATE_CUSTOMER"
   | "DELETE_CUSTOMER"
   | "UPDATE_STAFF"
@@ -74,4 +74,4 @@ export type StaffPermission =
   | "UPDATE_ORGANIZATION"
   | "DELETE_ORGANIZATION"
   | "UPDATE_CUSTOMER"
-  | "VIEW_INVOICE";
+  | "VIEW_INVOICES";

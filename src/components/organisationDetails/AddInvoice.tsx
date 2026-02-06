@@ -8,6 +8,7 @@ import { FileText, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { createInvoiceSchema } from "@/lib/Schema/AddInvoiceValidations";
 import { useCreateInvoice } from "@/hooks/useAdmin";
 
@@ -46,11 +47,13 @@ export default function AddInvoicePage({
       },
       {
         onSuccess: () => {
+          toast.success("Invoice created successfully");
           reset();
           onClose();
         },
         onError: (err) => {
           console.error(err);
+          toast.error("Failed to create invoice");
         },
       },
     );
@@ -71,22 +74,9 @@ export default function AddInvoicePage({
           </CardHeader>
 
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Invoice Number */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
-                Invoice Number
-              </label>
-              <Input placeholder="INV-001" {...register("invoice_number")} />
-              {errors.invoice_number && (
-                <p className="text-xs text-red-500">
-                  {errors.invoice_number.message}
-                </p>
-              )}
-            </div>
-
             {/* Issue Date */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+              <label className="text-sm font-medium text-gray-700">
                 Issue Date
               </label>
               <Input type="date" {...register("issue_date")} />
@@ -99,7 +89,7 @@ export default function AddInvoicePage({
 
             {/* Due Date */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+              <label className="text-sm font-medium text-gray-700">
                 Due Date
               </label>
               <Input type="date" {...register("due_date")} />
@@ -112,13 +102,18 @@ export default function AddInvoicePage({
 
             {/* Total Amount */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+              <label className="text-sm font-medium text-gray-700">
                 Total Amount
               </label>
               <Input
                 type="number"
                 placeholder="0.00"
                 {...register("total_amount", { valueAsNumber: true })}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-", "."].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
               />
               {errors.total_amount && (
                 <p className="text-xs text-red-500">
@@ -129,13 +124,18 @@ export default function AddInvoicePage({
 
             {/* Paid Amount */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+              <label className="text-sm font-medium text-gray-700">
                 Paid Amount
               </label>
               <Input
                 type="number"
                 placeholder="0.00"
                 {...register("paid_amount", { valueAsNumber: true })}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-", "."].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
               />
               {errors.paid_amount && (
                 <p className="text-xs text-red-500">

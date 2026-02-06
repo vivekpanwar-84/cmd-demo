@@ -7,6 +7,7 @@ import {
   CheckCircle,
   XCircle,
   Pencil,
+  Trash2,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -23,11 +24,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 import { useDebounce } from "@/hooks/useDebounce";
-import { useOrganizationStaff } from "@/hooks/useAdmin";
+import { useOrganizationStaff, useDeleteStaff } from "@/hooks/useAdmin";
 import type { Staff as StaffType } from "@/types/staff";
 import AddStaffPage from "./organisationDetails/AddStaff";
+import { Loader2 } from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -45,6 +58,10 @@ export function StaffPage({ organizationId }: StaffProps) {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [selectedStaff, setSelectedStaff] = useState<StaffType | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const limit = 5;
   const debouncedSearch = useDebounce(search, 600);
@@ -55,6 +72,8 @@ export function StaffPage({ organizationId }: StaffProps) {
     limit,
     search: debouncedSearch,
   });
+
+  const deleteStaff = useDeleteStaff(organizationId);
 
   const staffList: StaffType[] = data?.data ?? [];
   const meta = data?.pagination;
@@ -75,6 +94,21 @@ export function StaffPage({ organizationId }: StaffProps) {
       { length: Math.min(3, meta.totalPages - start + 1) },
       (_, i) => start + i
     );
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    deleteStaff.mutate(deleteId, {
+      onSuccess: () => {
+        toast.success("Staff member deleted successfully");
+        setShowDeleteConfirm(false);
+        setDeleteId(null);
+      },
+      onError: (err) => {
+        console.error(err);
+        toast.error("Failed to delete staff member");
+      },
+    });
   };
 
   /* ================= PAGINATION ================= */
@@ -145,6 +179,26 @@ export function StaffPage({ organizationId }: StaffProps) {
 
   return (
     <>
+      {/* Edit Staff Modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Edit Staff</DialogTitle>
+          </DialogHeader>
+
+          {selectedStaff && (
+            <AddStaffPage
+              organizationId={organizationId}
+              onClose={() => {
+                setEditOpen(false);
+                setSelectedStaff(null);
+              }}
+              initialData={selectedStaff}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Add Staff Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -169,6 +223,32 @@ export function StaffPage({ organizationId }: StaffProps) {
             Add Staff
           </Button>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the staff member and remove their access.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteStaff.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleDelete();
+                }}
+                disabled={deleteStaff.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {deleteStaff.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                Delete Staff
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Search + View Toggle */}
         <div className="flex items-center justify-between">
@@ -262,18 +342,36 @@ export function StaffPage({ organizationId }: StaffProps) {
                       <div>
                         {staff.is_active ? (
                           <span className="flex items-center gap-1 text-green-600">
-                            <CheckCircle className="w-4 h-4" /> Active
+                            <CheckCircle className="w-4 h-4" />
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-gray-500">
-                            <XCircle className="w-4 h-4" /> Inactive
+                          <span className="flex items-center gap-1 text-red-500">
+                            <XCircle className="w-4 h-4" />
                           </span>
                         )}
                       </div>
 
-                      <div className="flex justify-center">
-                        <Button size="sm" variant="ghost">
+                      <div className="flex justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setSelectedStaff(staff);
+                            setEditOpen(true);
+                          }}
+                        >
                           <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            setDeleteId(staff._id);
+                            setShowDeleteConfirm(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -296,8 +394,33 @@ export function StaffPage({ organizationId }: StaffProps) {
                           </div>
                         </div>
 
-                        <div className="text-sm">
-                          {staff.is_active ? "Active" : "Inactive"}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className={staff.is_active ? "text-green-600" : "text-gray-500"}>
+                            {staff.is_active ? "Active" : "Inactive"}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedStaff(staff);
+                                setEditOpen(true);
+                              }}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                setDeleteId(staff._id);
+                                setShowDeleteConfirm(true);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

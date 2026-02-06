@@ -1,5 +1,6 @@
 "use client";
-import { ArrowLeft, User, Users, Mail, Phone, Building2, FileText, DollarSign, Calendar, Eye, ChevronDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, User, Users, Mail, Phone, Building2, FileText, DollarSign, Calendar, Eye, ChevronDown, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +12,24 @@ import { useRouter } from 'next/navigation';
 import { useCustomerInvoices } from '@/hooks/useAdmin';
 import { Loader2 } from 'lucide-react';
 import { Invoice } from '@/types/invoice';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import AddCustomerPage from "./organisationDetails/AddCustomer";
+import { Pencil } from 'lucide-react';
 
 interface CustomerProfileProps {
   customerId: string;
@@ -27,10 +46,23 @@ const mockPaymentHistory = [
 export function CustomerProfile({ customerId }: CustomerProfileProps) {
   const router = useRouter();
   const [newNote, setNewNote] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 5;
 
-  const { data: invoicesData, isLoading: isInvoicesLoading } = useCustomerInvoices(customerId);
+  const { data: invoicesData, isLoading: isInvoicesLoading } = useCustomerInvoices(customerId, { page, limit });
   const customer = (invoicesData as any)?.data?.customer;
-  const invoices: Invoice[] = (invoicesData as any)?.data?.invoices ?? [];
+  const rawInvoices: Invoice[] = (invoicesData as any)?.data?.invoices ?? [];
+  const meta = (invoicesData as any)?.pagination || (invoicesData as any)?.data?.pagination;
+
+  // Client-side pagination fallback if server metadata is missing
+  const invoices = meta ? rawInvoices : rawInvoices.slice((page - 1) * limit, page * limit);
+  const effectiveMeta = meta || {
+    totalPages: Math.ceil(rawInvoices.length / limit),
+    totalRecords: rawInvoices.length,
+    currentPage: page
+  };
 
   if (isInvoicesLoading) {
     return (
@@ -80,29 +112,41 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
             <ArrowLeft className="w-5 h-5 text-orange-600" />
           </Button>
 
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center border border-orange-100">
-                <Users className="w-5 h-5 text-orange-600" />
-              </div>
+          <div className="flex items-center justify-between flex-1">
+            <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold text-gray-900 leading-none">{customer.full_name}</h1>
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none font-medium px-3 py-0.5 rounded-full">
-                  {customer.status || 'Active'}
-                </Badge>
+                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center border border-orange-100">
+                  <Users className="w-5 h-5 text-orange-600" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-semibold text-gray-900 leading-none">{customer.full_name}</h1>
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none font-medium px-3 py-0.5 rounded-full">
+                    {customer.status || 'Active'}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-6 mt-4 ml-1">
+                <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                  <Mail className="w-4.5 h-4.5 text-gray-500" />
+                  <span>{customer.email || '—'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                  <Phone className="w-4.5 h-4.5 text-gray-500" />
+                  <span>{customer.phone || '—'}</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6 mt-4 ml-1">
-              <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
-                <Mail className="w-4.5 h-4.5 text-gray-500" />
-                <span>{customer.email || '—'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
-                <Phone className="w-4.5 h-4.5 text-gray-500" />
-                <span>{customer.phone || '—'}</span>
-              </div>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+              onClick={() => setShowEditConfirm(true)}
+            >
+              <Pencil className="w-4 h-4 ml-1" />
+              {/* <span className="mr-1">Edit Profile</span> */}
+            </Button>
           </div>
         </div>
       </div>
@@ -217,25 +261,85 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 mt-3 sm:mt-0">
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">
+                        <div className="flex items-center gap-4 sm:gap-12 mt-3 sm:mt-0">
+                          {/* Amount Column */}
+                          <div className="min-w-[120px] text-right border-r border-gray-100 pr-4">
+                            <p className="font-bold text-gray-900 whitespace-nowrap">
                               INR {invoice.total_amount.toLocaleString()}
                             </p>
+                          </div>
+
+                          {/* Status Column */}
+                          <div className="min-w-[100px] flex justify-center px-2">
                             <Badge
                               variant={invoice.status === 'paid' ? 'default' : 'destructive'}
-                              className={`mt-1 ${invoice.status === 'paid' ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}`}
+                              className={`capitalize px-3 py-1 font-medium transition-all transform hover:scale-110 rounded-full border-none shadow-sm ${invoice.status === 'paid'
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : 'bg-[#C62828] text-white hover:bg-[#B71C1C]'
+                                }`}
                             >
                               {invoice.status}
                             </Badge>
                           </div>
-                          <Button size="sm" variant="outline" tabIndex={-1}>
+
+                          {/* Action Column */}
+                          <Button size="sm" variant="outline" className="h-10 w-10 p-0 rounded-lg hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all ml-2 shrink-0" tabIndex={-1}>
                             <Eye className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
                     </Link>
                   ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {effectiveMeta && effectiveMeta.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-100 bg-white/50 p-4 rounded-b-lg">
+                  <div className="text-sm text-gray-500 font-semibold tracking-tight">
+                    Showing {(page - 1) * limit + 1} to {Math.min(page * limit, effectiveMeta.totalRecords)} of {effectiveMeta.totalRecords} Invoices
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="h-9 px-3 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium transition-all"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Prev
+                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500 font-medium">Page</span>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={effectiveMeta.totalPages}
+                        value={page}
+                        className="w-14 h-9 text-center font-semibold border-gray-200 focus:ring-primary/20 bg-white"
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (val >= 1 && val <= effectiveMeta.totalPages) {
+                            setPage(val);
+                          }
+                        }}
+                      />
+                      <span className="text-sm text-gray-500 font-medium">of {effectiveMeta.totalPages}</span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.min(effectiveMeta.totalPages, p + 1))}
+                      disabled={page === effectiveMeta.totalPages}
+                      className="h-9 px-3 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium transition-all"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -328,6 +432,45 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Customer Modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Edit Customer</DialogTitle>
+          </DialogHeader>
+
+          <AddCustomerPage
+            organizationId={customer.org_id || ""}
+            onClose={() => setEditOpen(false)}
+            initialData={customer}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Confirmation Modal */}
+      <AlertDialog open={showEditConfirm} onOpenChange={setShowEditConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit Customer profile?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to edit this customer&apos;s information?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowEditConfirm(false);
+                setEditOpen(true);
+              }}
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

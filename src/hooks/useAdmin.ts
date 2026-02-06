@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin.service";
+import { pricingService } from "@/services/pricing.service";
 import { useAuth } from "@/providers/AuthProvider";
 import type { ApiResponseStaff, RegisterStaffPayload, Staff } from "@/types/staff";
 
@@ -123,7 +124,41 @@ export const useCreateCustomer = (orgId: string) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["organization", "customer", orgId],
+        queryKey: ["organization", "customers", orgId],
+      });
+    },
+  });
+};
+export const useDeleteCustomer = (orgId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (customerId: string) => adminService.deleteCustomer(customerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "customers", orgId],
+      });
+    },
+  });
+};
+
+export const useUpdateCustomer = (orgId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      customerId,
+      data,
+    }: {
+      customerId: string;
+      data: Partial<RegisterCustomerPayload>;
+    }) => adminService.updateCustomer(customerId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "customers", orgId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["customer", "composite", variables.customerId],
       });
     },
   });
@@ -188,6 +223,40 @@ export const useCreateStaff = (orgId: string) => {
     mutationFn: (data: RegisterStaffPayload) =>
       adminService.createStaff(orgId, data),
 
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "staff", orgId],
+      });
+    },
+  });
+};
+
+export const useUpdateStaff = (orgId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      staffId,
+      data,
+    }: {
+      staffId: string;
+      data: Partial<RegisterStaffPayload>;
+    }) => adminService.updateStaff(staffId, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "staff", orgId],
+      });
+      // Also invalidate composite customer data if needed, but staff is usually independent.
+    },
+  });
+};
+
+export const useDeleteStaff = (orgId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (staffId: string) => adminService.deleteStaff(staffId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["organization", "staff", orgId],
@@ -298,20 +367,35 @@ export function useCreateInvoice() {
       return adminService.createInvoice(orgId, customerId, data);
     },
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["organization", "invoice", variables.orgId] });
+      queryClient.invalidateQueries({ queryKey: ["organization", "customers", variables.orgId] });
+      queryClient.invalidateQueries({ queryKey: ["customer", "composite", variables.customerId] });
     },
   });
 }
 
-export const useCustomerInvoices = (customerId: string) => {
+export const useCustomerInvoices = (customerId: string, params?: { page: number; limit: number }) => {
   const { isAuthenticated } = useAuth();
 
   return useQuery({
-    queryKey: ["customer", "composite", customerId],
-    queryFn: () => adminService.getCustomerInvoices(customerId),
+    queryKey: ["customer", "composite", customerId, params],
+    queryFn: () => adminService.getCustomerInvoices(customerId, params),
     enabled: Boolean(isAuthenticated && customerId),
+  });
+};
+
+/* =========================
+   PRICING / PLANS
+========================= */
+
+export const usePlans = () => {
+  const { isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["admin", "plans"],
+    queryFn: () => pricingService.getAllPlans(),
+    enabled: Boolean(isAuthenticated),
   });
 };
 
