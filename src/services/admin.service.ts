@@ -207,12 +207,22 @@ export const adminService = {
     const response = await api.delete(`/admin/staff/${staffId}`);
     return response.data;
   },
-  deleteCustomer: async (customerId: string) => {
-    const response = await api.delete(`/admin/customers/${customerId}`);
+  deleteCustomer: async (orgId: string, customerId: string) => {
+    const response = await api.delete(`/admin/org/${orgId}/customers/${customerId}`);
+    return response.data;
+  },
+  deleteOrganization: async (orgId: string) => {
+    const response = await api.delete(`/admin/organizations/${orgId}`);
     return response.data;
   },
   updateCustomer: async (customerId: string, data: Partial<RegisterCustomerPayload>) => {
     const response = await api.patch(`/admin/customers/${customerId}`, data);
+    return response.data;
+  },
+
+  /* REMINDERS */
+  sendReminder: async (orgId: string, invoiceId: string, data: { channel: string }) => {
+    const response = await api.post(`/admin/org/${orgId}/customer/invoice/reminder/${invoiceId}`, data);
     return response.data;
   },
 

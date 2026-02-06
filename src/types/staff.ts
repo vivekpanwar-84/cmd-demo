@@ -59,6 +59,7 @@ export interface RegisterStaffPayload {
   password: string;
   permissions: string[];
   org_id?: string;
+  is_active?: boolean;
 }
 
 export type StaffPermission =

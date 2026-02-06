@@ -15,6 +15,7 @@ import { Invoice as BackendInvoice } from '@/types/invoice';
 interface InvoiceDetailProps {
   invoiceId: string;
   customerId?: string;
+  orgId: string;
 }
 
 interface Invoice {
@@ -69,7 +70,7 @@ const mockInvoiceData: Record<string, Invoice> = {
   },
 };
 
-export function InvoiceDetail({ invoiceId, customerId }: InvoiceDetailProps) {
+export function InvoiceDetail({ invoiceId, customerId, orgId }: InvoiceDetailProps) {
   const router = useRouter();
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
 
@@ -80,7 +81,7 @@ export function InvoiceDetail({ invoiceId, customerId }: InvoiceDetailProps) {
 
   // If we have backend data, we'll merge it with mock data for fields not in backend
   const invoice = backendInvoice ? {
-    id: backendInvoice.invoice_number,
+    id: backendInvoice._id,
     customer: {
       name: customerData?.full_name || 'Customer',
       email: customerData?.email || 'customer@example.com',
@@ -352,6 +353,7 @@ export function InvoiceDetail({ invoiceId, customerId }: InvoiceDetailProps) {
         open={reminderModalOpen}
         onOpenChange={setReminderModalOpen}
         invoice={invoice}
+        orgId={orgId}
       />
     </div>
   );

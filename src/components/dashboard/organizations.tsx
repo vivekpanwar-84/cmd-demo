@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useOrganizations } from "@/hooks/useAdmin"; // new paginated hook
+import { useOrganizations, useDeleteOrganization } from "@/hooks/useAdmin"; // new paginated hook
 import {
   Search, Building2, Users, UsersRound, FileText,
   CheckCircle, XCircle, Loader2, LayoutGrid, List,
-  ChevronDown, Eye, Globe, ChevronLeft, ChevronRight
+  ChevronDown, Eye, Globe, ChevronLeft, ChevronRight, Trash2
 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Organization } from "@/types/organization";
 import AddOrganizationPage from "./AddOrganisation";
+import { toast } from "sonner";
 
 /* ================= TYPES ================= */
 type ViewMode = "list" | "card";
@@ -43,6 +44,8 @@ export function Organizations() {
   const [limit] = useState(5);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -65,6 +68,23 @@ export function Organizations() {
     limit,
     search: debouncedSearch
   });
+
+  const deleteOrgMutation = useDeleteOrganization();
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await deleteOrgMutation.mutateAsync(deleteId);
+      toast.success("Organization deleted successfully");
+      setDeleteId(null);
+    } catch (err: any) {
+      console.error("Failed to delete organization:", err);
+      toast.error(err.response?.data?.message || "Failed to delete organization");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const organizations: Organization[] = data?.data ?? [];
   const meta = data?.pagination;
@@ -230,9 +250,18 @@ export function Organizations() {
                     </div>
                   </div>
 
-                  <Button asChild className="w-full">
-                    <Link href={`/organizations/${org._id}`}>View Organization</Link>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button asChild className="flex-1">
+                      <Link href={`/organizations/${org._id}`}>View Organization</Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={() => setDeleteId(org._id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -282,9 +311,7 @@ export function Organizations() {
                     </div>
 
                     <div className="flex justify-center">
-                      <Link href={`/organizations/${org._id}`} className="p-2 rounded-md hover:bg-accent">
-                        <Eye className="w-4 h-4 text-gray-600 hover:text-primary" />
-                      </Link>
+                      <OrganizationActions orgId={org._id} onDelete={setDeleteId} />
                     </div>
                   </div>
                 )
@@ -353,6 +380,55 @@ export function Organizations() {
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Organization</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Are you sure you want to delete this organization? This action cannot be undone.
+            </p>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setDeleteId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function OrganizationActions({ orgId, onDelete }: { orgId: string, onDelete: (id: string) => void }) {
+  return (
+    <div className="flex justify-center gap-5">
+      <Link href={`/organizations/${orgId}`} className="p-2 rounded-md hover:bg-accent">
+        <Eye className="w-4 h-4 text-gray-600 hover:text-primary" />
+      </Link>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="p-2 h-8 w-8  text-red-500 hover:text-red-700 hover:bg-red-50"
+        onClick={() => onDelete(orgId)}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     </div>
   );
 }

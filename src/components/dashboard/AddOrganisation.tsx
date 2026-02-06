@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { createOrganizationSchema } from "@/lib/Schema/AddOrganisationValidation";
 import { useCreateOrganization } from "@/hooks/useAdmin";
+import { toast } from "sonner";
 
 type FormValues = z.infer<typeof createOrganizationSchema>;
 
@@ -46,6 +47,7 @@ export default function AddOrganizationPage({
 
     createOrganization.mutate(payload, {
       onSuccess: () => {
+        toast.success("Organization created successfully");
         reset();
         onClose?.();
       },
@@ -54,6 +56,7 @@ export default function AddOrganizationPage({
           "Create organization failed:",
           error?.response?.data || error.message
         );
+        toast.error(error?.response?.data?.message || "Failed to create organization");
       },
     });
   };

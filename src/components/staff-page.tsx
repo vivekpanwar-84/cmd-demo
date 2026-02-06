@@ -7,7 +7,7 @@ import {
   CheckCircle,
   XCircle,
   Pencil,
-  Trash2,
+  Power,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -37,7 +37,7 @@ import {
 import { toast } from "sonner";
 
 import { useDebounce } from "@/hooks/useDebounce";
-import { useOrganizationStaff, useDeleteStaff } from "@/hooks/useAdmin";
+import { useOrganizationStaff, useUpdateStaff } from "@/hooks/useAdmin";
 import type { Staff as StaffType } from "@/types/staff";
 import AddStaffPage from "./organisationDetails/AddStaff";
 import { Loader2 } from "lucide-react";
@@ -60,8 +60,8 @@ export function StaffPage({ organizationId }: StaffProps) {
   const [search, setSearch] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<StaffType | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [statusToggleStaff, setStatusToggleStaff] = useState<StaffType | null>(null);
+  const [showStatusConfirm, setShowStatusConfirm] = useState(false);
 
   const limit = 5;
   const debouncedSearch = useDebounce(search, 600);
@@ -73,7 +73,7 @@ export function StaffPage({ organizationId }: StaffProps) {
     search: debouncedSearch,
   });
 
-  const deleteStaff = useDeleteStaff(organizationId);
+  const updateStaffMutation = useUpdateStaff(organizationId);
 
   const staffList: StaffType[] = data?.data ?? [];
   const meta = data?.pagination;
@@ -96,17 +96,22 @@ export function StaffPage({ organizationId }: StaffProps) {
     );
   };
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    deleteStaff.mutate(deleteId, {
+  const handleToggleStatus = async () => {
+    if (!statusToggleStaff) return;
+    const newStatus = !statusToggleStaff.is_active;
+
+    updateStaffMutation.mutate({
+      staffId: statusToggleStaff._id,
+      data: { is_active: newStatus }
+    }, {
       onSuccess: () => {
-        toast.success("Staff member deleted successfully");
-        setShowDeleteConfirm(false);
-        setDeleteId(null);
+        toast.success(`Staff member marked as ${newStatus ? 'Active' : 'Inactive'} successfully`);
+        setShowStatusConfirm(false);
+        setStatusToggleStaff(null);
       },
       onError: (err) => {
         console.error(err);
-        toast.error("Failed to delete staff member");
+        toast.error("Failed to update staff status");
       },
     });
   };
@@ -224,27 +229,27 @@ export function StaffPage({ organizationId }: StaffProps) {
           </Button>
         </div>
 
-        {/* Delete Confirmation Modal */}
-        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        {/* Status Toggle Confirmation Modal */}
+        <AlertDialog open={showStatusConfirm} onOpenChange={setShowStatusConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogTitle>Change Staff Status?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the staff member and remove their access.
+                Are you sure you want to change the status of this staff member? This will toggle their access to the system.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleteStaff.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={updateStaffMutation.isPending}>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => {
                   e.preventDefault();
-                  handleDelete();
+                  handleToggleStatus();
                 }}
-                disabled={deleteStaff.isPending}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={updateStaffMutation.isPending}
+                className={statusToggleStaff?.is_active ? "bg-red-600 hover:bg-red-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
               >
-                {deleteStaff.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-                Delete Staff
+                {updateStaffMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Power className="w-4 h-4 mr-2" />}
+                {statusToggleStaff?.is_active ? "Mark Inactive" : "Mark Active"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -365,13 +370,13 @@ export function StaffPage({ organizationId }: StaffProps) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className={staff.is_active ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-green-500 hover:text-green-700 hover:bg-green-50"}
                           onClick={() => {
-                            setDeleteId(staff._id);
-                            setShowDeleteConfirm(true);
+                            setStatusToggleStaff(staff);
+                            setShowStatusConfirm(true);
                           }}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Power className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -412,13 +417,13 @@ export function StaffPage({ organizationId }: StaffProps) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className={staff.is_active ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-green-500 hover:text-green-700 hover:bg-green-50"}
                               onClick={() => {
-                                setDeleteId(staff._id);
-                                setShowDeleteConfirm(true);
+                                setStatusToggleStaff(staff);
+                                setShowStatusConfirm(true);
                               }}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Power className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>

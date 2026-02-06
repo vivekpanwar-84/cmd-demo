@@ -281,7 +281,7 @@ export function Invoices({ organizationId }: InvoicesProps) {
 
                     {/* Actions */}
                     <div className="flex justify-end gap-2">
-                      <Link href={`/invoices/${invoice.invoice_number}?customerId=${invoice.customer_id?._id}`}>
+                      <Link href={`/invoices/${invoice.invoice_number}?customerId=${invoice.customer_id?._id}&orgId=${organizationId}`}>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -313,7 +313,7 @@ export function Invoices({ organizationId }: InvoicesProps) {
                         {invoice.customer_id?.phone ?? "—"}
                       </p>
                       <div className="flex justify-end gap-2 mt-2">
-                        <Link href={`/invoices/${invoice.invoice_number}?customerId=${invoice.customer_id?._id}`}>
+                        <Link href={`/invoices/${invoice.invoice_number}?customerId=${invoice.customer_id?._id}&orgId=${organizationId}`}>
                           <Button size="sm" variant="ghost">
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -398,8 +398,9 @@ export function Invoices({ organizationId }: InvoicesProps) {
         <ReminderModal
           open={reminderOpen}
           onOpenChange={setReminderOpen}
+          orgId={organizationId}
           invoice={{
-            id: selectedInvoice.invoice_number,
+            id: selectedInvoice._id,
             customer: {
               name: selectedInvoice.customer_id?.phone ?? "Customer",
               email: "customer@example.com",

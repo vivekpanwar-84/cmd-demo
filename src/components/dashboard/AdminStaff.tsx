@@ -19,6 +19,7 @@ import {
 import AddAdminStaff from "@/components/organisationDetails/AddAdminStaff";
 import { useState, useEffect } from "react";
 import { useAdminStaff, useDeleteAdminStaff } from "@/hooks/useAdmin";
+import { toast } from "sonner";
 import { AdminStaff as AdminStaffType } from "@/types/staff";
 
 interface StaffProps {
@@ -84,8 +85,14 @@ export function AdminStaff({ organizationId }: StaffProps) {
     if (deleteConfirmId) {
       deleteStaff(deleteConfirmId, {
         onSuccess: () => {
+          toast.success("Staff member deleted successfully");
           setDeleteConfirmId(null);
           refetch();
+        },
+        onError: (err: any) => {
+          console.error("Delete staff failed:", err);
+          toast.error(err?.response?.data?.message || "Failed to delete staff member");
+          setDeleteConfirmId(null);
         }
       });
     }

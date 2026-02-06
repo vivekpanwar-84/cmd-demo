@@ -62,6 +62,7 @@ export function Customers({ organizationId }: CustomersProps) {
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteOrgId, setDeleteOrgId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const router = useRouter();
@@ -91,7 +92,7 @@ export function Customers({ organizationId }: CustomersProps) {
     },
   );
 
-  const deleteCustomer = useDeleteCustomer(organizationId ?? "");
+  const deleteCustomer = useDeleteCustomer();
 
   const customers: Customer[] = data?.data ?? [];
   const meta = data?.pagination;
@@ -118,12 +119,16 @@ export function Customers({ organizationId }: CustomersProps) {
     value ? value.charAt(0).toUpperCase() + value.slice(1) : "—";
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    deleteCustomer.mutate(deleteId, {
+    if (!deleteId || (!organizationId && !deleteOrgId)) return;
+    deleteCustomer.mutate({
+      customerId: deleteId,
+      orgId: organizationId || deleteOrgId || ""
+    }, {
       onSuccess: () => {
         toast.success("Customer deleted successfully");
         setShowDeleteConfirm(false);
         setDeleteId(null);
+        setDeleteOrgId(null);
       },
       onError: (err) => {
         console.error(err);
@@ -361,6 +366,7 @@ export function Customers({ organizationId }: CustomersProps) {
                           className="p-0 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                           onClick={() => {
                             setDeleteId(customer._id);
+                            setDeleteOrgId(customer.org_id);
                             setShowDeleteConfirm(true);
                           }}
                         >
@@ -421,6 +427,7 @@ export function Customers({ organizationId }: CustomersProps) {
                             <button
                               onClick={() => {
                                 setDeleteId(customer._id);
+                                setDeleteOrgId(customer.org_id);
                                 setShowDeleteConfirm(true);
                               }}
                               className="text-xs text-red-500 inline-flex items-center gap-1 hover:underline"

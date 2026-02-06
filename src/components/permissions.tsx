@@ -163,6 +163,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/components/ui/utils";
+import { toast } from "sonner";
 
 const ALL_PERMISSIONS = [
     "View Organization",
@@ -213,6 +214,7 @@ export default function Permissions() {
 
     const handleSave = () => {
         console.log("Saving permissions for", selectedRole, rolePermissions[selectedRole!]);
+        toast.success(`Permissions for ${selectedRole} saved successfully`);
     };
 
     return (

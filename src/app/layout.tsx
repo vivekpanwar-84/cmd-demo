@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import  DashboardLayout  from "@/app/(dashboard)/layout";
+import DashboardLayout from "@/app/(dashboard)/layout";
 import QueryProvider from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
             <DashboardLayout>
               {children}
             </DashboardLayout>
+            <Toaster position="top-center" />
           </AuthProvider>
         </QueryProvider>
       </body>

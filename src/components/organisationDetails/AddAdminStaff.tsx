@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import {
   useCreateAdminStaff,
   useAdminStaffPermissions,
@@ -95,7 +96,16 @@ export default function AddAdminStaff({
     } else {
       createAdminStaff.mutate(
         { ...data, org_id: organizationId },
-        { onSuccess: () => onClose?.() }
+        {
+          onSuccess: () => {
+            toast.success("Staff member created successfully");
+            onClose?.();
+          },
+          onError: (err: any) => {
+            console.error("Create staff failed:", err);
+            toast.error(err?.response?.data?.message || "Failed to create staff member");
+          }
+        }
       );
     }
   };
@@ -106,8 +116,14 @@ export default function AddAdminStaff({
     const updatePayload = (password && password.trim() !== "") ? pendingUpdateData : rest;
     updateAdminStaff.mutate(updatePayload, {
       onSuccess: () => {
+        toast.success("Staff member updated successfully");
         setShowUpdateConfirm(false);
         onClose?.();
+      },
+      onError: (err: any) => {
+        console.error("Update staff failed:", err);
+        toast.error(err?.response?.data?.message || "Failed to update staff member");
+        setShowUpdateConfirm(false);
       },
       onSettled: () => {
         setShowUpdateConfirm(false);
