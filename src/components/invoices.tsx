@@ -27,6 +27,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useOrganizationInvoice } from "@/hooks/useAdmin";
 import type { Invoice } from "@/types/invoice";
 import { ReminderModal } from "./reminder-modal";
+import { SubscriptionLock } from "./common/SubscriptionLock";
+import { useOrganizationDetail } from "@/hooks/useAdmin";
 
 type ViewMode = "list" | "card";
 
@@ -39,6 +41,8 @@ export function Invoices({ organizationId }: InvoicesProps) {
   const [search, setSearch] = useState("");
   const [reminderOpen, setReminderOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [lockOpen, setLockOpen] = useState(false);
+  const [lockAction, setLockAction] = useState("");
 
   const router = useRouter();
   const pathname = usePathname();
@@ -62,6 +66,8 @@ export function Invoices({ organizationId }: InvoicesProps) {
     limit,
     search: debouncedSearch,
   });
+
+  const { data: orgDetail } = useOrganizationDetail(organizationId);
 
   // const invoices = data?.data ?? [];
   const invoices: Invoice[] = data?.data ?? [];
@@ -87,6 +93,16 @@ export function Invoices({ organizationId }: InvoicesProps) {
       { length: Math.min(3, meta.totalPages - start + 1) },
       (_, i) => start + i
     );
+  };
+
+  const handleReminderClick = (invoice: Invoice) => {
+    if (orgDetail?.plan_status !== "active") {
+      setLockAction("send a payment reminder");
+      setLockOpen(true);
+    } else {
+      setSelectedInvoice(invoice);
+      setReminderOpen(true);
+    }
   };
 
   /* ================= RENDER ================= */
@@ -321,10 +337,7 @@ export function Invoices({ organizationId }: InvoicesProps) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            setSelectedInvoice(invoice);
-                            setReminderOpen(true);
-                          }}
+                          onClick={() => handleReminderClick(invoice)}
                         >
                           <Bell className="w-4 h-4 text-orange-600" />
                         </Button>
@@ -401,6 +414,7 @@ export function Invoices({ organizationId }: InvoicesProps) {
           orgId={organizationId}
           invoice={{
             id: selectedInvoice._id,
+            invoice_number: selectedInvoice.invoice_number,
             customer: {
               name: selectedInvoice.customer_id?.phone ?? "Customer",
               email: "customer@example.com",
@@ -413,6 +427,12 @@ export function Invoices({ organizationId }: InvoicesProps) {
           }}
         />
       )}
+      <SubscriptionLock
+        organizationId={organizationId}
+        isOpen={lockOpen}
+        onClose={() => setLockOpen(false)}
+        actionName={lockAction}
+      />
     </div>
   );
 }

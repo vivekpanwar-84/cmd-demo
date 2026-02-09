@@ -141,6 +141,9 @@ export const useCreateCustomer = (orgId: string) => {
       queryClient.invalidateQueries({
         queryKey: ["organization", "customers", orgId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["organization-detail", orgId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
     },
   });
@@ -154,6 +157,12 @@ export const useDeleteCustomer = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["organization", "customers", variables.orgId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "invoice", variables.orgId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["organization-detail", variables.orgId],
       });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
       // Also invalidate global list if orgId was empty
@@ -184,6 +193,7 @@ export const useUpdateCustomer = (orgId: string) => {
       queryClient.invalidateQueries({
         queryKey: ["customer", "composite", variables.customerId],
       });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
     },
   });
 };
@@ -251,6 +261,9 @@ export const useCreateStaff = (orgId: string) => {
       queryClient.invalidateQueries({
         queryKey: ["organization", "staff", orgId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["organization-detail", orgId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
     },
   });
@@ -285,6 +298,9 @@ export const useDeleteStaff = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["organization", "staff", orgId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["organization-detail", orgId],
       });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
     },
@@ -413,6 +429,7 @@ export function useCreateInvoice() {
       queryClient.invalidateQueries({ queryKey: ["organization", "invoice", variables.orgId] });
       queryClient.invalidateQueries({ queryKey: ["organization", "customers", variables.orgId] });
       queryClient.invalidateQueries({ queryKey: ["customer", "composite", variables.customerId] });
+      queryClient.invalidateQueries({ queryKey: ["organization-detail", variables.orgId] });
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
     },
   });

@@ -40,10 +40,11 @@ import { Button } from "@/components/ui/button";
 
 import AddCustomerPage from "./organisationDetails/AddCustomer";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useOrganizationCustomer, useDeleteCustomer } from "@/hooks/useAdmin";
+import { useOrganizationCustomer, useDeleteCustomer, useOrganizationDetail } from "@/hooks/useAdmin";
 import { Customer } from "@/types/customertsx";
 import AddInvoicePage from "./organisationDetails/AddInvoice";
 import { Invoice } from "@/types/invoice";
+import { SubscriptionLock } from "./common/SubscriptionLock";
 
 /* ================= TYPES ================= */
 
@@ -64,6 +65,9 @@ export function Customers({ organizationId }: CustomersProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteOrgId, setDeleteOrgId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
+  const [lockAction, setLockAction] = useState("");
+  const [isLimitReachedState, setIsLimitReachedState] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -92,6 +96,7 @@ export function Customers({ organizationId }: CustomersProps) {
     },
   );
 
+  const { data: orgDetail } = useOrganizationDetail(organizationId ?? "");
   const deleteCustomer = useDeleteCustomer();
 
   const customers: Customer[] = data?.data ?? [];
@@ -135,6 +140,33 @@ export function Customers({ organizationId }: CustomersProps) {
         toast.error("Failed to delete customer");
       },
     });
+  };
+
+  const handleAddClick = () => {
+    const isInactive = orgDetail?.plan_status !== "active";
+    const isLimitReached = (orgDetail?.usage?.customers ?? 0) >= (orgDetail?.limits?.customers ?? 0);
+
+    if (isInactive || isLimitReached) {
+      setLockAction("add a new customer");
+      setIsLimitReachedState(isLimitReached);
+      setLockOpen(true);
+    } else {
+      setOpen(true);
+    }
+  };
+
+  const handleInvoiceClick = (customerId: string) => {
+    const isInactive = orgDetail?.plan_status !== "active";
+    const isLimitReached = (orgDetail?.usage?.invoices ?? 0) >= (orgDetail?.limits?.invoices ?? 0);
+
+    if (isInactive || isLimitReached) {
+      setLockAction("create a new invoice");
+      setIsLimitReachedState(isLimitReached);
+      setLockOpen(true);
+    } else {
+      setSelectedCustomerId(customerId);
+      setInvoiceOpen(true);
+    }
   };
 
   /* ================= SUB COMPONENTS ================= */
@@ -227,7 +259,7 @@ export function Customers({ organizationId }: CustomersProps) {
             </p> */}
           </div>
 
-          <Button onClick={() => setOpen(true)}>
+          <Button onClick={handleAddClick}>
             <User className="w-4 h-4 mr-2" />
             Add Customer
           </Button>
@@ -376,10 +408,7 @@ export function Customers({ organizationId }: CustomersProps) {
 
                       <div className="flex justify-end">
                         <Button
-                          onClick={() => {
-                            setSelectedCustomerId(customer._id);
-                            setInvoiceOpen(true);
-                          }}
+                          onClick={() => handleInvoiceClick(customer._id)}
                           className="bg-primary hover:bg-primary/90 text-white h-7 px-2 text-[10px] rounded-md shrink-0"
                           variant="default"
                           size="sm"
@@ -438,10 +467,7 @@ export function Customers({ organizationId }: CustomersProps) {
                           </div>
 
                           <Button
-                            onClick={() => {
-                              setSelectedCustomerId(customer._id);
-                              setInvoiceOpen(true);
-                            }}
+                            onClick={() => handleInvoiceClick(customer._id)}
                             className="bg-primary hover:bg-primary/90 text-white h-7 px-2 text-[10px] rounded-md"
                             size="sm"
                           >
@@ -477,6 +503,13 @@ export function Customers({ organizationId }: CustomersProps) {
           )}
         </DialogContent>
       </Dialog>
+      <SubscriptionLock
+        organizationId={organizationId ?? ""}
+        isOpen={lockOpen}
+        onClose={() => setLockOpen(false)}
+        actionName={lockAction}
+        isLimitReached={isLimitReachedState}
+      />
     </>
   );
 }

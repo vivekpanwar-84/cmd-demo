@@ -41,6 +41,8 @@ import { useOrganizationStaff, useUpdateStaff } from "@/hooks/useAdmin";
 import type { Staff as StaffType } from "@/types/staff";
 import AddStaffPage from "./organisationDetails/AddStaff";
 import { Loader2 } from "lucide-react";
+import { SubscriptionLock } from "./common/SubscriptionLock";
+import { useOrganizationDetail } from "@/hooks/useAdmin";
 
 /* ================= TYPES ================= */
 
@@ -62,6 +64,7 @@ export function StaffPage({ organizationId }: StaffProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [statusToggleStaff, setStatusToggleStaff] = useState<StaffType | null>(null);
   const [showStatusConfirm, setShowStatusConfirm] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
 
   const limit = 5;
   const debouncedSearch = useDebounce(search, 600);
@@ -72,6 +75,8 @@ export function StaffPage({ organizationId }: StaffProps) {
     limit,
     search: debouncedSearch,
   });
+
+  const { data: orgDetail } = useOrganizationDetail(organizationId);
 
   const updateStaffMutation = useUpdateStaff(organizationId);
 
@@ -114,6 +119,17 @@ export function StaffPage({ organizationId }: StaffProps) {
         toast.error("Failed to update staff status");
       },
     });
+  };
+
+  const handleAddClick = () => {
+    const isInactive = orgDetail?.plan_status !== "active";
+    const isLimitReached = (orgDetail?.usage?.staff ?? 0) >= (orgDetail?.limits?.staff ?? 0);
+
+    if (isInactive || isLimitReached) {
+      setLockOpen(true);
+    } else {
+      setOpen(true);
+    }
   };
 
   /* ================= PAGINATION ================= */
@@ -223,7 +239,7 @@ export function StaffPage({ organizationId }: StaffProps) {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-semibold">Staff</h1>
 
-          <Button onClick={() => setOpen(true)}>
+          <Button onClick={handleAddClick}>
             <User className="w-4 h-4 mr-2" />
             Add Staff
           </Button>
@@ -438,6 +454,13 @@ export function StaffPage({ organizationId }: StaffProps) {
           </Card>
         )}
       </div>
+      <SubscriptionLock
+        organizationId={organizationId}
+        isOpen={lockOpen}
+        onClose={() => setLockOpen(false)}
+        actionName="add a new staff member"
+        isLimitReached={(orgDetail?.usage?.staff ?? 0) >= (orgDetail?.limits?.staff ?? 0)}
+      />
     </>
   );
 }

@@ -15,6 +15,8 @@ export interface ApiResponsecustomer<T> {
   data: T;
 }
 
+
+
 export interface RegisterCustomerPayload {
   full_name: string;
   email: string;

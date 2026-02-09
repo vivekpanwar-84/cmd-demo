@@ -20,6 +20,7 @@ interface InvoiceDetailProps {
 
 interface Invoice {
   id: string;
+  invoice_number: string;
   customer: {
     name: string;
     email: string;
@@ -47,6 +48,7 @@ interface Invoice {
 const mockInvoiceData: Record<string, Invoice> = {
   'INV-001': {
     id: 'INV-001',
+    invoice_number: 'INV-001',
     customer: {
       name: 'John Smith',
       email: 'john@example.com',
@@ -82,6 +84,7 @@ export function InvoiceDetail({ invoiceId, customerId, orgId }: InvoiceDetailPro
   // If we have backend data, we'll merge it with mock data for fields not in backend
   const invoice = backendInvoice ? {
     id: backendInvoice._id,
+    invoice_number: backendInvoice.invoice_number,
     customer: {
       name: customerData?.full_name || 'Customer',
       email: customerData?.email || 'customer@example.com',
@@ -157,7 +160,7 @@ export function InvoiceDetail({ invoiceId, customerId, orgId }: InvoiceDetailPro
                   <FileText className="w-5 h-5 text-orange-600" />
                 </div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-2xl font-semibold text-gray-900 leading-none">{invoice.id}</h1>
+                  <h1 className="text-2xl font-semibold text-gray-900 leading-none">{invoice.invoice_number}</h1>
                   <Badge className={getStatusColor(invoice.status as any)}>
                     {invoice.status.toUpperCase()}
                   </Badge>

@@ -21,6 +21,7 @@ interface ReminderModalProps {
   onOpenChange: (open: boolean) => void;
   invoice: {
     id: string;
+    invoice_number: string;
     customer: {
       name: string;
       email: string;
@@ -41,7 +42,7 @@ export function ReminderModal({
   const [method, setMethod] = useState<'email' | 'whatsapp' | 'sms'>('email');
 
   const [message, setMessage] = useState(
-    `Dear ${invoice.customer.name},\n\nThis is a friendly reminder that invoice ${invoice.id} for $${invoice.total.toLocaleString()} is due on ${invoice.dueDate}.\n\nPlease process the payment at your earliest convenience.\n\nThank you for your business!`
+    `Dear ${invoice.customer.name},\n\nThis is a friendly reminder that invoice ${invoice.invoice_number} for $${invoice.total.toLocaleString()} is due on ${invoice.dueDate}.\n\nPlease process the payment at your earliest convenience.\n\nThank you for your business!`
   );
 
   const sendReminder = useSendReminder();
@@ -76,7 +77,7 @@ export function ReminderModal({
           <DialogTitle>Send Payment Reminder</DialogTitle>
           <DialogDescription>
             Send a payment reminder to {invoice.customer.name} for invoice{' '}
-            {invoice.id}
+            {invoice.invoice_number}
           </DialogDescription>
         </DialogHeader>
 
@@ -254,7 +255,7 @@ export function ReminderModal({
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-gray-500">Invoice ID</p>
-                  <p className="font-medium">{invoice.id}</p>
+                  <p className="font-medium">{invoice.invoice_number}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Amount</p>

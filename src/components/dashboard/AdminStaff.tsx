@@ -87,7 +87,6 @@ export function AdminStaff({ organizationId }: StaffProps) {
         onSuccess: () => {
           toast.success("Staff member deleted successfully");
           setDeleteConfirmId(null);
-          refetch();
         },
         onError: (err: any) => {
           console.error("Delete staff failed:", err);
@@ -115,7 +114,6 @@ export function AdminStaff({ organizationId }: StaffProps) {
             onClose={() => {
               setOpen(false);
               setEditingStaff(null);
-              refetch();
             }}
           />
         </DialogContent>
@@ -126,7 +124,7 @@ export function AdminStaff({ organizationId }: StaffProps) {
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 ">
             <div>
-              <h3 className="font-semibold">Staff Usage</h3>
+              <h3 className="font-semibold">Admin Staff members</h3>
               <p className="text-sm text-muted-foreground">
                 Manage all Admin Staff members
               </p>

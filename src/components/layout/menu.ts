@@ -32,13 +32,13 @@ export const MENU_ITEMS = [
   {
     id: "Plans",
     label: "Plans",
-    href: "/subscriptions",
+    href: "/plans",
     icon: CreditCard,
   },
   {
     id: "subscriptions",
     label: "Subcriptions",
-    href: "/plans",
+    href: "/subscriptions",
     icon: Wallet,
   },
   {
