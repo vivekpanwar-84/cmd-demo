@@ -186,6 +186,14 @@ export function Invoices({ organizationId }: InvoicesProps) {
               </div>
             ) : viewMode === "list" ? (
               <div className="divide-y">
+                {/* List Header */}
+                <div className="grid grid-cols-[1.5fr_1.2fr_1fr_80px_100px] gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div>Invoice Number / Date</div>
+                  <div>Phone</div>
+                  <div>Status</div>
+                  <div className="text-center">Currency</div>
+                  <div className="text-right pr-2">Actions</div>
+                </div>
                 {invoices.map((invoice) => (
                   // <div
                   //   key={invoice._id}
@@ -298,7 +306,7 @@ export function Invoices({ organizationId }: InvoicesProps) {
                     {/* Actions */}
                     <div className="flex justify-end gap-2">
                       <Link href={`/invoices/${invoice.invoice_number}?customerId=${invoice.customer_id?._id}&orgId=${organizationId}`}>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
                           <Eye className="w-4 h-4" />
                         </Button>
                       </Link>
@@ -306,13 +314,13 @@ export function Invoices({ organizationId }: InvoicesProps) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => {
                           setSelectedInvoice(invoice);
                           setReminderOpen(true);
                         }}
                       >
-                        <Bell className="w-4 h-4 text-orange-600" />
+                        <Bell className="w-4 h-4 text-orange-600 cursor-pointer" />
                       </Button>
                     </div>
                   </div>

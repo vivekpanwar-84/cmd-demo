@@ -106,7 +106,7 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="w-10 h-10 bg-orange-50 hover:bg-orange-100 rounded-full flex items-center justify-center shrink-0"
+            className="w-10 h-10 bg-orange-50 hover:bg-orange-100 rounded-full flex items-center justify-center shrink-0 cursor-pointer"
             onClick={() => router.back()}
           >
             <ArrowLeft className="w-5 h-5 text-orange-600" />
@@ -141,7 +141,7 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+              className="gap-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700 cursor-pointer"
               onClick={() => setShowEditConfirm(true)}
             >
               <Pencil className="w-4 h-4 ml-1" />
@@ -242,6 +242,18 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {/* List Header */}
+                  <div className="flex items-center justify-between p-4 bg-gray-50/50 border-b text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-1">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 opacity-0"></div>
+                      <div>Invoice Details</div>
+                    </div>
+                    <div className="flex items-center gap-4 sm:gap-12">
+                      <div className="min-w-[120px] text-right pr-4">Amount</div>
+                      <div className="min-w-[100px] text-center">Status</div>
+                      <div className="w-10 opacity-0 ml-2"></div>
+                    </div>
+                  </div>
                   {invoices.map((invoice) => (
                     <Link href={`/invoices/${invoice.invoice_number}?customerId=${customerId}`} key={invoice._id}>
                       <div

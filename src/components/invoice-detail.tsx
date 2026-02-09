@@ -175,12 +175,12 @@ export function InvoiceDetail({ invoiceId, customerId, orgId }: InvoiceDetailPro
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline">
+            <Button variant="outline" className="cursor-pointer">
               Download PDF
             </Button>
             {!isPaid && (
               <Button
-                className="bg-primary hover:bg-primary/90 text-white gap-2"
+                className="bg-primary hover:bg-primary/90 text-white gap-2 cursor-pointer"
                 onClick={() => setReminderModalOpen(true)}
               >
                 <Bell className="w-4 h-4" />

@@ -339,6 +339,14 @@ export function StaffPage({ organizationId }: StaffProps) {
                 </div>
               ) : viewMode === "list" ? (
                 <div className="divide-y">
+                  {/* List Header */}
+                  <div className="grid grid-cols-6 gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="col-span-2">Staff Member / Joined</div>
+                    <div>Email Address</div>
+                    <div>Phone Number</div>
+                    <div>Status</div>
+                    <div className="text-center">Actions</div>
+                  </div>
                   {staffList.map((staff) => (
                     <div
                       key={staff._id}
@@ -376,6 +384,7 @@ export function StaffPage({ organizationId }: StaffProps) {
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="cursor-pointer"
                           onClick={() => {
                             setSelectedStaff(staff);
                             setEditOpen(true);
@@ -386,7 +395,7 @@ export function StaffPage({ organizationId }: StaffProps) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className={staff.is_active ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-green-500 hover:text-green-700 hover:bg-green-50"}
+                          className={staff.is_active ? "text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer" : "text-green-500 hover:text-green-700 hover:bg-green-50 cursor-pointer"}
                           onClick={() => {
                             setStatusToggleStaff(staff);
                             setShowStatusConfirm(true);

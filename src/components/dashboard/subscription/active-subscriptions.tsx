@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Search, ChevronLeft, CheckCircle, XCircle, Pencil } from "lucide-react";
+import { Building2, Search, ChevronLeft, CheckCircle, XCircle, Pencil, Power } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -42,7 +42,6 @@ const DUMMY_DATA = [
     { id: 8, orgName: "Tech Nova", planName: "Basic Plan", details: "50 / 1000 units", total: "1,000 units", status: "Disabled" },
     { id: 9, orgName: "Tech Nova", planName: "Basic Plan", details: "50 / 1000 units", total: "1,000 units", status: "Disabled" },
     { id: 10, orgName: "Tech Nova", planName: "Basic Plan", details: "50 / 1000 units", total: "1,000 units", status: "Disabled" },
-    { id: 11, orgName: "Tech Nova", planName: "Basic Plan", details: "50 / 1000 units", total: "1,000 units", status: "Disabled" },
 ];
 
 interface ActiveSubscriptionsProps {
@@ -211,21 +210,37 @@ export function ActiveSubscriptions({ onUpdateClick }: ActiveSubscriptionsProps)
                                                 Edit
                                             </Button> */}
 
-                                            <Button
+                                            {/* <Button
                                                 variant="outline"
                                                 size="sm"
                                                 className={
                                                     item.status === "Enabled"
-                                                        ? "h-8 text-destructive border-destructive/20 hover:bg-destructive/10"
-                                                        : "h-8 text-green-700 border-green-200 hover:bg-green-50"
+                                                        ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-green-500 hover:text-green-700 hover:bg-green-50"
                                                 }
                                                 onClick={() => {
                                                     setSelectedOrg(item);
                                                     setShowConfirm(true);
                                                 }}
                                             >
-                                                {item.status === "Enabled" ? "Disable" : "Enable"}
+                                                {item.status === "Enabled" ? "<Power className="w-4 h-4" />" : "<Power className="w-4 h-4" />"}
+                                            </Button> */}
+
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className={
+                                                    item.status === "Enabled"
+                                                        ? "text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                        : "text-green-500 hover:text-green-700 hover:bg-green-50"
+                                                }
+                                                onClick={() => {
+                                                    setSelectedOrg(item);
+                                                    setShowConfirm(true);
+                                                }}
+                                            >
+                                                <Power className="w-4 h-4" />
                                             </Button>
+
                                         </div>
                                     </TableCell>
                                 </TableRow>

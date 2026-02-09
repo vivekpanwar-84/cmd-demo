@@ -92,7 +92,7 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
   const isExpired = org.plan_status !== "active";
 
   return (
-    <>
+    <div onDoubleClick={() => router.push('/organizations')}>
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
         <div className="flex items-center gap-3 px-4 py-2">
@@ -360,6 +360,6 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </div>
   );
 }

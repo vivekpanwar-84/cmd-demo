@@ -364,6 +364,14 @@ export function Customers({ organizationId }: CustomersProps) {
                 </div>
               ) : viewMode === "list" ? (
                 <div className="divide-y">
+                  {/* List Header */}
+                  <div className="grid grid-cols-[2fr_1.5fr_1.2fr_100px_80px] gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div>Customer Name</div>
+                    <div>Email</div>
+                    <div>Phone</div>
+                    <div className="text-center">Actions</div>
+                    <div className="text-right pr-2">Invoice</div>
+                  </div>
                   {customers.map((customer) => (
                     <div
                       key={customer._id}
@@ -388,14 +396,14 @@ export function Customers({ organizationId }: CustomersProps) {
                       <div className="flex items-center justify-center gap-4">
                         <Link
                           href={`/customers/${customer._id}`}
-                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-primary transition-colors"
+                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="p-0 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className="p-0 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                           onClick={() => {
                             setDeleteId(customer._id);
                             setDeleteOrgId(customer.org_id);
@@ -409,7 +417,7 @@ export function Customers({ organizationId }: CustomersProps) {
                       <div className="flex justify-end">
                         <Button
                           onClick={() => handleInvoiceClick(customer._id)}
-                          className="bg-primary hover:bg-primary/90 text-white h-7 px-2 text-[10px] rounded-md shrink-0"
+                          className="bg-primary hover:bg-primary/90 text-white h-7 px-2 text-[10px] rounded-md shrink-0 cursor-pointer"
                           variant="default"
                           size="sm"
                         >
