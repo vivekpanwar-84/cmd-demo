@@ -348,6 +348,31 @@ export const useUpdateAdminStaff = (staffId: string, organizationId?: string) =>
   });
 };
 
+export const useUpdateAdminStaffList = (organizationId?: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      staffId,
+      data,
+    }: {
+      staffId: string;
+      data: Partial<RegisterStaffPayload>;
+    }) => adminService.updateAdminStaff(staffId, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "adminstaff"],
+      });
+      if (organizationId) {
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "adminstaff", organizationId],
+        });
+      }
+    },
+  });
+};
+
 export const useDeleteAdminStaff = (organizationId?: string) => {
   const queryClient = useQueryClient();
 

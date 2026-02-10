@@ -162,13 +162,13 @@ export function AdminStaff({ organizationId }: StaffProps) {
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left p-3">Name</th>
-                <th className="text-left p-3">Email</th>
-                <th className="text-left p-3">Phone</th>
-                <th className="text-left p-3">Role</th>
+                <th className="text-left pl-4">Name</th>
+                <th className="text-left pl-13">Email</th>
+                <th className="text-left pl-8">Phone</th>
+                <th className="text-left pl-8">Role</th>
                 <th className="text-left p-3">Status</th>
                 <th className="text-left p-3">Joined</th>
-                <th className="text-left p-3 text-right">Actions</th>
+                <th className="text-left pl-20 ">Actions</th>
               </tr>
             </thead>
 

@@ -14,6 +14,10 @@ import {
   List,
   LayoutGrid,
   FileText,
+  Power,
+  Plus,
+  CheckCircle,
+  PauseCircle,
 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
@@ -37,6 +41,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 import AddCustomerPage from "./organisationDetails/AddCustomer";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -68,6 +73,11 @@ export function Customers({ organizationId }: CustomersProps) {
   const [lockOpen, setLockOpen] = useState(false);
   const [lockAction, setLockAction] = useState("");
   const [isLimitReachedState, setIsLimitReachedState] = useState(false);
+
+  // Dummy Status State
+  const [localStatuses, setLocalStatuses] = useState<Record<string, boolean>>({});
+  const [statusActionCustomer, setStatusActionCustomer] = useState<Customer | null>(null);
+  const [showStatusConfirm, setShowStatusConfirm] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -140,6 +150,28 @@ export function Customers({ organizationId }: CustomersProps) {
         toast.error("Failed to delete customer");
       },
     });
+  };
+
+  const handleStatusClick = (customer: Customer) => {
+    setStatusActionCustomer(customer);
+    setShowStatusConfirm(true);
+  };
+
+  const confirmStatusToggle = () => {
+    if (!statusActionCustomer) return;
+
+    // Toggle status in local state
+    setLocalStatuses(prev => {
+      const currentStatus = prev[statusActionCustomer._id] ?? statusActionCustomer.reminder_paused ?? false;
+      return {
+        ...prev,
+        [statusActionCustomer._id]: !currentStatus
+      };
+    });
+
+    toast.success("Reminder status updated (Preview Mode)");
+    setShowStatusConfirm(false);
+    setStatusActionCustomer(null);
   };
 
   const handleAddClick = () => {
@@ -251,18 +283,34 @@ export function Customers({ organizationId }: CustomersProps) {
 
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold">Customers</h1>
+            <h1 className="text-3xl font-semibold text-gray-900">Customers</h1>
             {/* <p className="text-gray-500 mt-1">
-              Manage customer relationships and billing
-            </p> */}
+            Manage and track your customer base
+          </p> */}
           </div>
 
-          <Button onClick={handleAddClick}>
-            <User className="w-4 h-4 mr-2" />
-            Add Customer
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="bg-primary hover:bg-primary/90 text-white cursor-pointer"
+              onClick={() => {
+                const isInactive = orgDetail?.plan_status !== "active";
+                const isLimitReached = (orgDetail?.usage?.customers ?? 0) >= (orgDetail?.limits?.customers ?? 0);
+
+                if (isInactive || isLimitReached) {
+                  setLockAction("add a new customer");
+                  setIsLimitReachedState(isLimitReached);
+                  setLockOpen(true);
+                } else {
+                  setOpen(true);
+                }
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Customer
+            </Button>
+          </div>
         </div>
 
 
@@ -365,68 +413,99 @@ export function Customers({ organizationId }: CustomersProps) {
               ) : viewMode === "list" ? (
                 <div className="divide-y">
                   {/* List Header */}
-                  <div className="grid grid-cols-[2fr_1.5fr_1.2fr_100px_80px] gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div>Customer Name</div>
-                    <div>Email</div>
-                    <div>Phone</div>
+                  <div className="grid grid-cols-[2fr_1.5fr_1.2fr_100px_80px_140px] gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="pl-4">Customer Name</div>
+                    <div className="pl-8">Email</div>
+                    <div className="pr-3">Phone Number</div>
+                    <div className="text-center">Status</div>
+                    <div className="text-center">Invoice</div>
                     <div className="text-center">Actions</div>
-                    <div className="text-right pr-2">Invoice</div>
                   </div>
-                  {customers.map((customer) => (
-                    <div
-                      key={customer._id}
-                      className="grid grid-cols-[2fr_1.5fr_1.2fr_100px_80px] gap-4 px-4 py-4 items-center hover:bg-muted"
-                    >
-                      <div className="flex gap-3 min-w-0">
-                        <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center shrink-0">
-                          <User className="w-5 h-5 text-primary" />
+                  {customers.map((customer) => {
+                    const isPaused = localStatuses[customer._id] ?? customer.reminder_paused ?? false;
+                    return (
+                      <div
+                        key={customer._id}
+                        className="grid grid-cols-[2fr_1.5fr_1.2fr_100px_80px_140px] gap-4 px-4 py-4 items-center hover:bg-muted cursor-pointer"
+                        onClick={() => router.push(`/customers/${customer._id}`)}
+                      >
+                        <div className="flex gap-3 min-w-0">
+                          <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center shrink-0">
+                            <User className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">
+                              {capitalize(customer.full_name)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Created{" "}
+                              {new Date(customer.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">
-                            {capitalize(customer.full_name)}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            Created{" "}
-                            {new Date(customer.createdAt).toLocaleDateString()}
-                          </p>
+                        <div className="truncate text-sm">{customer.email ?? "—"}</div>
+                        <div className="text-sm truncate">{customer.phone ?? "—"}</div>
+                        <div className="flex justify-center">
+                          <div
+                            className={`px-2 py-1 ${isPaused
+                              ? "text-red-700"
+                              : "text-green-700"
+                              }`}
+                          >
+                            {isPaused ? <PauseCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                          </div>
                         </div>
-                      </div>
-                      <div className="truncate text-sm">{customer.email ?? "—"}</div>
-                      <div className="text-sm truncate">{customer.phone ?? "—"}</div>
-                      <div className="flex items-center justify-center gap-4">
-                        <Link
-                          href={`/customers/${customer._id}`}
-                          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="p-0 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                          onClick={() => {
-                            setDeleteId(customer._id);
-                            setDeleteOrgId(customer.org_id);
-                            setShowDeleteConfirm(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                        <div className="flex justify-center">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInvoiceClick(customer._id);
+                            }}
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-primary hover:bg-primary/10"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
 
-                      <div className="flex justify-end">
-                        <Button
-                          onClick={() => handleInvoiceClick(customer._id)}
-                          className="bg-primary hover:bg-primary/90 text-white h-7 px-2 text-[10px] rounded-md shrink-0 cursor-pointer"
-                          variant="default"
-                          size="sm"
-                        >
-                          <FileText className="w-3 h-3 mr-1" />
-                          Invoice
-                        </Button>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className={`h-8 w-8 ${isPaused ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-orange-600 hover:text-orange-700 hover:bg-orange-50'}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusClick(customer);
+                            }}
+                            title={isPaused ? "Resume Reminders" : "Pause Reminders"}
+                          >
+                            <Power className="w-4 h-4" />
+                          </Button>
+                          <Link
+                            href={`/customers/${customer._id}`}
+                            className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="p-0 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(customer._id);
+                              setDeleteOrgId(customer.org_id);
+                              setShowDeleteConfirm(true);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
@@ -451,9 +530,39 @@ export function Customers({ organizationId }: CustomersProps) {
                         <div className="text-sm space-y-1">
                           <p>Email: {customer.email ?? "—"}</p>
                           <p>Phone: {customer.phone ?? "—"}</p>
+                          <div className="flex items-center justify-between pt-2">
+                            <span className="text-xs text-muted-foreground">Status:</span>
+                            <Badge
+                              variant="outline"
+                              className={(localStatuses[customer._id] ?? customer.reminder_paused ?? false)
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : "bg-green-50 text-green-700 border-green-200"
+                              }
+                            >
+                              {(localStatuses[customer._id] ?? customer.reminder_paused ?? false) ?
+                                <div className="flex items-center gap-1">
+                                  <PauseCircle className="w-3 h-3" />
+                                  <span>Paused</span>
+                                </div>
+                                :
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>Active</span>
+                                </div>
+                              }
+                            </Badge>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center gap-2 pt-2 border-t border-gray-50">
-                          <div className="flex gap-4">
+                          <div className="flex gap-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => handleStatusClick(customer)}
+                            >
+                              <Power className={`w-3 h-3 ${(localStatuses[customer._id] ?? customer.reminder_paused ?? false) ? 'text-green-600' : 'text-orange-600'}`} />
+                            </Button>
                             <Link
                               href={`/customers/${customer._id}`}
                               className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
@@ -476,11 +585,10 @@ export function Customers({ organizationId }: CustomersProps) {
 
                           <Button
                             onClick={() => handleInvoiceClick(customer._id)}
-                            className="bg-primary hover:bg-primary/90 text-white h-7 px-2 text-[10px] rounded-md"
-                            size="sm"
+                            className="bg-primary hover:bg-primary/90 text-white h-7 w-7 rounded-sm flex items-center justify-center"
+                            size="icon"
                           >
-                            <FileText className="w-3 h-3 mr-1" />
-                            Invoice
+                            <Plus className="w-4 h-4" />
                           </Button>
                         </div>
                       </CardContent>
@@ -493,10 +601,10 @@ export function Customers({ organizationId }: CustomersProps) {
             </CardContent>
           </Card>
         )}
-      </div>
+      </div >
 
       {/* Add Invoice Modal (Single Shared Instance) */}
-      <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
+      < Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen} >
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="sr-only">
             <DialogTitle>Add Invoice</DialogTitle>
@@ -510,7 +618,7 @@ export function Customers({ organizationId }: CustomersProps) {
             />
           )}
         </DialogContent>
-      </Dialog>
+      </Dialog >
       <SubscriptionLock
         organizationId={organizationId ?? ""}
         isOpen={lockOpen}
@@ -518,6 +626,28 @@ export function Customers({ organizationId }: CustomersProps) {
         actionName={lockAction}
         isLimitReached={isLimitReachedState}
       />
+
+      {/* Status Confirmation Modal */}
+      <AlertDialog open={showStatusConfirm} onOpenChange={setShowStatusConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {(localStatuses[statusActionCustomer?._id || ""] ?? statusActionCustomer?.reminder_paused ?? false) ? 'Resume' : 'Pause'} Reminders?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {(localStatuses[statusActionCustomer?._id || ""] ?? statusActionCustomer?.reminder_paused ?? false) ? 'resume' : 'pause'} payment reminders for <strong>{statusActionCustomer?.full_name}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmStatusToggle}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
     </>
   );
 }

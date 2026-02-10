@@ -7,6 +7,7 @@ export interface Customer {
   phone: string;
   createdAt: string;
   updatedAt: string;
+  reminder_paused?: boolean;
   __v: number;
 }
 

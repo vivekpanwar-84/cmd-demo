@@ -1,11 +1,13 @@
 "use client";
-import { ArrowLeft, User, Users, Mail, Phone, Building2, FileText, DollarSign, Calendar, Eye, ChevronDown, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, User, Users, Mail, Phone, Building2, FileText, DollarSign, Calendar, Eye, ChevronDown, TrendingUp, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import AddCustomerPage from "./organisationDetails/AddCustomer";
 import { Pencil } from 'lucide-react';
+import { ReminderModal } from './reminder-modal';
 
 interface CustomerProfileProps {
   customerId: string;
@@ -49,6 +52,8 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [showEditConfirm, setShowEditConfirm] = useState(false);
   const [page, setPage] = useState(1);
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [selectedInvoiceForReminder, setSelectedInvoiceForReminder] = useState<any>(null);
   const limit = 5;
 
   const { data: invoicesData, isLoading: isInvoicesLoading } = useCustomerInvoices(customerId, { page, limit });
@@ -62,6 +67,56 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
     totalPages: Math.ceil(rawInvoices.length / limit),
     totalRecords: rawInvoices.length,
     currentPage: page
+  };
+
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const newSelected = new Set(selectedInvoiceIds);
+      invoices.forEach((inv) => newSelected.add(inv._id));
+      setSelectedInvoiceIds(newSelected);
+    } else {
+      const newSelected = new Set(selectedInvoiceIds);
+      invoices.forEach((inv) => newSelected.delete(inv._id));
+      setSelectedInvoiceIds(newSelected);
+    }
+  };
+
+  const handleSelectOne = (checked: boolean, id: string) => {
+    const newSelected = new Set(selectedInvoiceIds);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedInvoiceIds(newSelected);
+  };
+
+  const handleBulkReminder = () => {
+    // Create a bulk invoice object for the modal
+    const selectedInvoices = invoices.filter(inv => selectedInvoiceIds.has(inv._id));
+
+    if (selectedInvoices.length === 0) {
+      toast.error("No invoices selected");
+      return;
+    }
+
+    // Create a "bulk" invoice object for the modal
+    const bulkInvoice = {
+      id: 'bulk', // Special identifier for bulk operations
+      invoice_number: `${selectedInvoices.length} Invoices`,
+      customer: {
+        name: customer.full_name,
+        email: customer.email || '',
+        phone: customer.phone || ''
+      },
+      total: selectedInvoices.reduce((sum, inv) => sum + inv.total_amount, 0),
+      dueDate: 'Multiple dates'
+    };
+
+    setSelectedInvoiceForReminder(bulkInvoice);
+    setReminderModalOpen(true);
   };
 
   if (isInvoicesLoading) {
@@ -226,137 +281,144 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
         </TabsList>
 
         {/* Invoices Tab */}
-        <TabsContent value="invoices">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle>Customer Invoices</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isInvoicesLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        
+<TabsContent value="invoices">
+  <Card className="shadow-sm">
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle>Customer Invoices</CardTitle>
+
+      {selectedInvoiceIds.size > 0 && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBulkReminder}
+          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+        >
+          <Bell className="w-4 h-4 mr-2" />
+          Send Reminder ({selectedInvoiceIds.size})
+        </Button>
+      )}
+    </CardHeader>
+
+    <CardContent>
+      {invoices.length === 0 ? (
+        <div className="py-10 text-center text-sm text-muted-foreground">
+          No invoices found for this customer.
+        </div>
+      ) : (
+        <div className="space-y-2">
+
+          {/* ===== HEADER ===== */}
+          <div className="hidden md:grid grid-cols-[40px_1.8fr_1fr_1fr_120px_80px] items-center px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase rounded-md">
+            <Checkbox
+              checked={invoices.every(inv => selectedInvoiceIds.has(inv._id))}
+              onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+            />
+            <span className='pl-8'>Invoice</span>
+            <span className='pl-8'>Dates</span>
+            <span className="pr-4 text-right">Amount</span>
+            <span className="pr-4 text-center">Status</span>
+            <span className="pr-4 text-right">Action</span>
+          </div>
+
+          {/* ===== ROWS ===== */}
+          {invoices.map((invoice) => (
+            <div
+              key={invoice._id}
+              className={`grid grid-cols-1 md:grid-cols-[40px_1.8fr_1fr_1fr_120px_80px]
+              items-center gap-3 px-4 py-4 rounded-lg bg-white border
+              ${selectedInvoiceIds.has(invoice._id)
+                ? "border-orange-200 bg-orange-50/40"
+                : "border-gray-100"
+              }`}
+            >
+              {/* Checkbox */}
+              <Checkbox
+                checked={selectedInvoiceIds.has(invoice._id)}
+                onCheckedChange={(checked) =>
+                  handleSelectOne(checked as boolean, invoice._id)
+                }
+              />
+
+              {/* Invoice No */}
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-primary" />
                 </div>
-              ) : invoices.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  No invoices found for this customer.
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {invoice.invoice_number}
+                  </p>
+                  <p className="text-xs text-gray-500 md:hidden">
+                    Due: {new Date(invoice.due_date).toLocaleDateString()}
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* List Header */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50/50 border-b text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-1">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 opacity-0"></div>
-                      <div>Invoice Details</div>
-                    </div>
-                    <div className="flex items-center gap-4 sm:gap-12">
-                      <div className="min-w-[120px] text-right pr-4">Amount</div>
-                      <div className="min-w-[100px] text-center">Status</div>
-                      <div className="w-10 opacity-0 ml-2"></div>
-                    </div>
-                  </div>
-                  {invoices.map((invoice) => (
-                    <Link href={`/invoices/${invoice.invoice_number}?customerId=${customerId}`} key={invoice._id}>
-                      <div
-                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">{invoice.invoice_number}</p>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(invoice.issue_date).toLocaleDateString()}
-                              <span>•</span>
-                              <span>Due: {new Date(invoice.due_date).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 sm:gap-12 mt-3 sm:mt-0">
-                          {/* Amount Column */}
-                          <div className="min-w-[120px] text-right border-r border-gray-100 pr-4">
-                            <p className="font-bold text-gray-900 whitespace-nowrap">
-                              INR {invoice.total_amount.toLocaleString()}
-                            </p>
-                          </div>
+              </div>
 
-                          {/* Status Column */}
-                          <div className="min-w-[100px] flex justify-center px-2">
-                            <Badge
-                              variant={invoice.status === 'paid' ? 'default' : 'destructive'}
-                              className={`capitalize px-3 py-1 font-medium transition-all transform hover:scale-110 rounded-full border-none shadow-sm ${invoice.status === 'paid'
-                                ? 'bg-green-600 text-white hover:bg-green-700'
-                                : 'bg-[#C62828] text-white hover:bg-[#B71C1C]'
-                                }`}
-                            >
-                              {invoice.status}
-                            </Badge>
-                          </div>
+              {/* Dates */}
+              <div className="text-sm text-gray-600 hidden md:block">
+                <p> <b>Issued:</b> {new Date(invoice.issue_date).toLocaleDateString()}</p>
+                <p> <b>Due:</b> {new Date(invoice.due_date).toLocaleDateString()}</p>
+              </div>
 
-                          {/* Action Column */}
-                          <Button size="sm" variant="outline" className="h-10 w-10 p-0 rounded-lg hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all ml-2 shrink-0" tabIndex={-1}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {/* Amount */}
+              <div className="text-right font-semibold text-gray-900">
+                ₹ {invoice.total_amount.toLocaleString()}
+              </div>
 
-              {/* Pagination */}
-              {effectiveMeta && effectiveMeta.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-100 bg-white/50 p-4 rounded-b-lg">
-                  <div className="text-sm text-gray-500 font-semibold tracking-tight">
-                    Showing {(page - 1) * limit + 1} to {Math.min(page * limit, effectiveMeta.totalRecords)} of {effectiveMeta.totalRecords} Invoices
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="h-9 px-3 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium transition-all"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Prev
-                    </Button>
+              {/* Status */}
+              <div className="flex justify-center">
+                <Badge
+                  className={`capitalize rounded-full px-3 py-1 text-xs font-medium
+                    ${invoice.status === "paid"
+                      ? "bg-green-600 text-white"
+                      : "bg-red-600 text-white"
+                    }`}
+                >
+                  {invoice.status}
+                </Badge>
+              </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500 font-medium">Page</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={effectiveMeta.totalPages}
-                        value={page}
-                        className="w-14 h-9 text-center font-semibold border-gray-200 focus:ring-primary/20 bg-white"
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          if (val >= 1 && val <= effectiveMeta.totalPages) {
-                            setPage(val);
-                          }
-                        }}
-                      />
-                      <span className="text-sm text-gray-500 font-medium">of {effectiveMeta.totalPages}</span>
-                    </div>
+              {/* Actions */}
+              <div className="flex justify-end gap-1">
+                <Link href={`/invoices/${invoice.invoice_number}?customerId=${customerId}`}>
+                  <Button size="icon" variant="ghost">
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </Link>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => Math.min(effectiveMeta.totalPages, p + 1))}
-                      disabled={page === effectiveMeta.totalPages}
-                      className="h-9 px-3 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium transition-all"
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-orange-600 hover:bg-orange-50"
+                  onClick={() => {
+                    setSelectedInvoiceForReminder({
+                      id: invoice._id,
+                      invoice_number: invoice.invoice_number,
+                      customer: {
+                        name: customer.full_name,
+                        email: customer.email || "",
+                        phone: customer.phone || "",
+                      },
+                      total: invoice.total_amount,
+                      dueDate: new Date(invoice.due_date).toLocaleDateString(),
+                    });
+                    setReminderModalOpen(true);
+                  }}
+                >
+                  <Bell className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+</TabsContent>
+
+
+        
 
         {/* Payment History Tab */}
         <TabsContent value="payments">
@@ -483,6 +545,18 @@ export function CustomerProfile({ customerId }: CustomerProfileProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+      {/* Reminder Modal */}
+      {
+        selectedInvoiceForReminder && (
+          <ReminderModal
+            open={reminderModalOpen}
+            onOpenChange={setReminderModalOpen}
+            invoice={selectedInvoiceForReminder}
+            orgId={customer.org_id || ""}
+          />
+        )
+      }
+    </div >
   );
 }

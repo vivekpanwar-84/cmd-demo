@@ -313,30 +313,39 @@ export default function AddAdminStaff({
         </div>
       </form>
 
-      <AlertDialog open={showUpdateConfirm} onOpenChange={setShowUpdateConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Update</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to update this staff member's details and permissions?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={updateAdminStaff.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-[#FF8A5B] hover:bg-[#FF7A4B]"
-              onClick={(e) => {
-                e.preventDefault();
-                handleConfirmUpdate();
-              }}
-              disabled={updateAdminStaff.isPending}
-            >
-              {updateAdminStaff.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Confirm Update
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+     <AlertDialog open={showUpdateConfirm} onOpenChange={setShowUpdateConfirm}>
+  <AlertDialogContent
+    /* 🔴 ONLY FIX: move close (X) outside header line */
+    className="[&>button]:-top-1 [&>button]:right-4"
+  >
+    <AlertDialogHeader>
+      <AlertDialogTitle>Confirm Update</AlertDialogTitle>
+      <AlertDialogDescription>
+        Are you sure you want to update this staff member's details and permissions?
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel disabled={updateAdminStaff.isPending}>
+        Cancel
+      </AlertDialogCancel>
+      <AlertDialogAction
+        className="bg-[#FF8A5B] hover:bg-[#FF7A4B]"
+        onClick={(e) => {
+          e.preventDefault();
+          handleConfirmUpdate();
+        }}
+        disabled={updateAdminStaff.isPending}
+      >
+        {updateAdminStaff.isPending ? (
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        ) : null}
+        Confirm Update
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+
+
     </div>
   );
 }

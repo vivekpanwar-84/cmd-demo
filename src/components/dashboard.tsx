@@ -125,8 +125,12 @@ export function Dashboard() {
       value: `₹${totalDueAmount.toLocaleString()}`,
       icon: DollarSign,
       trend: "-2%",
-      color: "bg-purple-50 text-purple-600"
-    }
+      color: "bg-purple-50 text-purple-600",
+      meta: {
+        total: "totalAmount",
+        remaining: "remainingAmount"
+      }
+    },
   ];
 
   return (
@@ -153,7 +157,7 @@ export function Dashboard() {
           const Icon = stat.icon;
           return (
             <Card key={stat.title} className="group border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white/50 backdrop-blur-sm">
-              <CardContent className="p-6">
+              {/* <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className={`p-2.5 rounded-xl ${stat.color} transition-transform group-hover:scale-110 duration-300`}>
                     <Icon className="w-5 h-5" />
@@ -166,6 +170,53 @@ export function Dashboard() {
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{stat.title}</p>
                   <h3 className="text-3xl font-bold text-gray-900 tracking-tight">{stat.value}</h3>
                 </div>
+              </CardContent> */}
+
+
+               <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`p-2.5 rounded-xl ${stat.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] font-bold">
+                    {stat.trend}
+                  </Badge>
+                </div>
+
+                {/* 🔥 ONLY DUE AMOUNT CARD CUSTOM UI */}
+                {stat.title === "Due Amount" ? (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Amount</span>
+                      <span className="font-bold text-gray-900">
+                        ₹0
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Remaining Amount</span>
+                      <span className="font-bold text-purple-600">
+                        ₹0
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Due Amount</span>
+                      <span className="font-bold text-gray-900">
+                        {stat.value}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                      {stat.title}
+                    </p>
+                    <h3 className="text-3xl font-bold text-gray-900">
+                      {stat.value}
+                    </h3>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );

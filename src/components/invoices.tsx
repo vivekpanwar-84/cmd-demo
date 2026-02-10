@@ -188,9 +188,9 @@ export function Invoices({ organizationId }: InvoicesProps) {
               <div className="divide-y">
                 {/* List Header */}
                 <div className="grid grid-cols-[1.5fr_1.2fr_1fr_80px_100px] gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div>Invoice Number / Date</div>
-                  <div>Phone</div>
-                  <div>Status</div>
+                  <div className="pl-8">Invoice Number / Date</div>
+                  <div className="pl-10">Phone</div>
+                  <div className="pl-5">Status</div>
                   <div className="text-center">Currency</div>
                   <div className="text-right pr-2">Actions</div>
                 </div>
@@ -256,7 +256,8 @@ export function Invoices({ organizationId }: InvoicesProps) {
                   // </div>
                   <div
                     key={invoice._id}
-                    className="grid grid-cols-[1.5fr_1.2fr_1fr_80px_100px] items-center px-4 py-4 hover:bg-muted"
+                    className="grid grid-cols-[1.5fr_1.2fr_1fr_80px_100px] items-center px-4 py-4 hover:bg-muted cursor-pointer"
+                    onClick={() => router.push(`/invoices/${invoice.invoice_number}?customerId=${invoice.customer_id?._id}&orgId=${organizationId}`)}
                   >
                     {/* Invoice Number + Date */}
                     <div className="flex items-center gap-3 min-w-0">
@@ -299,12 +300,12 @@ export function Invoices({ organizationId }: InvoicesProps) {
                     </div>
 
                     {/* Currency */}
-                    <div className="text-center font-medium text-xs">
+                    <div className="text-center font-medium text-xs pr-8">
                       INR
                     </div>
 
                     {/* Actions */}
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       <Link href={`/invoices/${invoice.invoice_number}?customerId=${invoice.customer_id?._id}&orgId=${organizationId}`}>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
                           <Eye className="w-4 h-4" />
@@ -315,10 +316,7 @@ export function Invoices({ organizationId }: InvoicesProps) {
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0 cursor-pointer"
-                        onClick={() => {
-                          setSelectedInvoice(invoice);
-                          setReminderOpen(true);
-                        }}
+                        onClick={() => handleReminderClick(invoice)}
                       >
                         <Bell className="w-4 h-4 text-orange-600 cursor-pointer" />
                       </Button>

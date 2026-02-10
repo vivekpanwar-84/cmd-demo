@@ -119,7 +119,7 @@ export function Organizations() {
         </div>
 
         <Button
-          className="bg-primary hover:bg-primary/90 text-white"
+          className="bg-primary hover:bg-primary/90 text-white cursor-pointer"
           onClick={() => setIsAddModalOpen(true)}
         >
           <Building2 className="w-4 h-4 mr-2" />
@@ -165,7 +165,7 @@ export function Organizations() {
             <Button
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="sm"
-              className="rounded-none h-8 w-8 p-0"
+              className="rounded-none h-8 w-8 p-0 cursor-pointer"
               onClick={() => setViewMode("list")}
             >
               <List className="h-4 w-4" />
@@ -176,7 +176,7 @@ export function Organizations() {
             <Button
               variant={viewMode === "card" ? "secondary" : "ghost"}
               size="sm"
-              className="rounded-none h-8 w-8 p-0"
+              className="rounded-none h-8 w-8 p-0 cursor-pointer"
               onClick={() => setViewMode("card")}
             >
               <LayoutGrid className="h-4 w-4" />
@@ -256,10 +256,10 @@ export function Organizations() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="border-red-200 text-red-600 hover:bg-red-50"
+                      className="border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
                       onClick={() => setDeleteId(org._id)}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 " />
                     </Button>
                   </div>
                 </CardContent>
@@ -287,7 +287,11 @@ export function Organizations() {
                 const usage = org.usage ?? { staff: 0, customers: 0, invoices: 0 };
 
                 return (
-                  <div key={org._id} className="grid grid-cols-7 gap-4 px-4 py-4 items-center border-b hover:bg-gray-50 text-center">
+                  <div
+                    key={org._id}
+                    className="grid grid-cols-7 gap-4 px-4 py-4 items-center border-b hover:bg-gray-50 text-center cursor-pointer"
+                    onClick={() => router.push(`/organizations/${org._id}`)}
+                  >
                     <div className="col-span-2 flex items-center gap-3 text-left">
                       <div className="w-9 h-9 bg-accent rounded-md flex items-center justify-center">
                         <Building2 className="w-4 h-4 text-primary" />
@@ -418,14 +422,21 @@ export function Organizations() {
 function OrganizationActions({ orgId, onDelete }: { orgId: string, onDelete: (id: string) => void }) {
   return (
     <div className="flex justify-center gap-5">
-      <Link href={`/organizations/${orgId}`} className="p-2 rounded-md hover:bg-accent">
+      <Link
+        href={`/organizations/${orgId}`}
+        className="p-2 rounded-md hover:bg-accent"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Eye className="w-4 h-4 text-gray-600 hover:text-primary" />
       </Link>
       <Button
         variant="ghost"
         size="sm"
-        className="p-2 h-8 w-8  text-red-500 hover:text-red-700 hover:bg-red-50"
-        onClick={() => onDelete(orgId)}
+        className="p-2 h-8 w-8  text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(orgId);
+        }}
       >
         <Trash2 className="w-4 h-4" />
       </Button>

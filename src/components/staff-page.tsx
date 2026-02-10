@@ -13,6 +13,7 @@ import {
   ChevronRight,
   LayoutGrid,
   List,
+  Plus,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,12 +35,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+// import AddCustomerPage from "./organisationDetails/AddCustomer"; // Already imported above
 import { toast } from "sonner";
 
 import { useDebounce } from "@/hooks/useDebounce";
 import { useOrganizationStaff, useUpdateStaff } from "@/hooks/useAdmin";
 import type { Staff as StaffType } from "@/types/staff";
 import AddStaffPage from "./organisationDetails/AddStaff";
+import AddCustomerPage from "./organisationDetails/AddCustomer"; // Import AddCustomerPage
 import { Loader2 } from "lucide-react";
 import { SubscriptionLock } from "./common/SubscriptionLock";
 import { useOrganizationDetail } from "@/hooks/useAdmin";
@@ -65,6 +68,7 @@ export function StaffPage({ organizationId }: StaffProps) {
   const [statusToggleStaff, setStatusToggleStaff] = useState<StaffType | null>(null);
   const [showStatusConfirm, setShowStatusConfirm] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false); // State for Add Customer Modal
 
   const limit = 5;
   const debouncedSearch = useDebounce(search, 600);
@@ -234,6 +238,19 @@ export function StaffPage({ organizationId }: StaffProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Add Customer Modal */}
+      <Dialog open={addCustomerOpen} onOpenChange={setAddCustomerOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Add Customer </DialogTitle>
+          </DialogHeader>
+          <AddCustomerPage
+            organizationId={organizationId}
+            onClose={() => setAddCustomerOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       <div className="space-y-4">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -340,19 +357,20 @@ export function StaffPage({ organizationId }: StaffProps) {
               ) : viewMode === "list" ? (
                 <div className="divide-y">
                   {/* List Header */}
-                  <div className="grid grid-cols-6 gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="col-span-2">Staff Member / Joined</div>
-                    <div>Email Address</div>
+                  <div className="grid grid-cols-[2.5fr_1.5fr_1.2fr_80px_100px_100px] gap-4 px-4 py-3 bg-gray-50/50 border-b text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="pl-2">Staff Member / Joined</div>
+                    <div className="pl-2">Email Address</div>
                     <div>Phone Number</div>
-                    <div>Status</div>
+                    <div className="text-center">Status</div>
+                    <div className="text-center">Customer</div>
                     <div className="text-center">Actions</div>
                   </div>
                   {staffList.map((staff) => (
                     <div
                       key={staff._id}
-                      className="grid grid-cols-6 gap-4 px-4 py-4 hover:bg-muted"
+                      className="grid grid-cols-[2.5fr_1.5fr_1.2fr_80px_100px_100px] gap-4 px-4 py-4 hover:bg-muted items-center"
                     >
-                      <div className="col-span-2 flex gap-3">
+                      <div className="flex gap-3">
                         <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
                           <User className="w-5 h-5 text-primary" />
                         </div>
@@ -368,7 +386,7 @@ export function StaffPage({ organizationId }: StaffProps) {
                       <div className="truncate">{staff.email ?? "—"}</div>
                       <div>{staff.phone ?? "—"}</div>
 
-                      <div>
+                      <div className="flex justify-center">
                         {staff.is_active ? (
                           <span className="flex items-center gap-1 text-green-600">
                             <CheckCircle className="w-4 h-4" />
@@ -378,6 +396,18 @@ export function StaffPage({ organizationId }: StaffProps) {
                             <XCircle className="w-4 h-4" />
                           </span>
                         )}
+                      </div>
+
+                      <div className="flex justify-center">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-primary hover:text-primary/80 hover:bg-primary/10 cursor-pointer"
+                          onClick={() => setAddCustomerOpen(true)}
+                          title="Add Customer"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
                       </div>
 
                       <div className="flex justify-center gap-2">
@@ -449,6 +479,15 @@ export function StaffPage({ organizationId }: StaffProps) {
                               }}
                             >
                               <Power className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                              onClick={() => setAddCustomerOpen(true)}
+                              title="Add Customer"
+                            >
+                              <Plus className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
